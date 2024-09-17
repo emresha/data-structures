@@ -9,6 +9,7 @@
 #define ERR_IO 1
 #define ERR_RANGE 2
 
+// структура большого вещественного числа
 typedef struct
 {
     char sign;
@@ -45,6 +46,7 @@ int multiply_big_numbers(const char *mantissa, const char *big_int, char *result
 
     int temp_result[MAX_MANTISSA_DIGITS + MAX_INT_DIGITS] = {0};
 
+    // столбик
     for (int i = len_mantissa - 1; i >= 0; i--)
     {
         if (!isdigit(int_mantissa[i]))
@@ -98,53 +100,19 @@ int multiply(big_float_t *number, const char *big_int, big_float_t *result)
     int decimal_shift;
 
     int ret = multiply_big_numbers(number->mantissa, big_int, mult_result, &decimal_shift);
-    printf("%s, %d, %d\n", mult_result, decimal_shift, number->exponent);
+    // printf("%s, %d, %d\n", mult_result, decimal_shift, number->exponent);
     if (ret != ERR_OK)
     {
         return ret;
     }
 
+    // здесь подсчитывается экспонента
+    result->exponent = number->exponent - decimal_shift + (int)strlen(mult_result);
 
-    // if (dot_position <= 0)
-    // {
-    //     int zero_padding = -dot_position + 1;
-    //     int shift = zero_padding - 1;
+    // printf("%zu\n", number->exponent - decimal_shift + (int)strlen(mult_result));
 
-    //     for (int i = len_result - 1; i >= 0; i--)
-    //     {
-    //         if (shift + i < MAX_MANTISSA_DIGITS)
-    //         {
-    //             mult_result[shift + i] = mult_result[i];
-    //         }
-    //     }
-
-    //     for (int i = 0; i < shift; i++)
-    //     {
-    //         mult_result[i] = '0';
-    //     }
-
-    //     mult_result[zero_padding - 1] = '\0';
-    //     decimal_shift = zero_padding - 1;
-    // }
-    // else
-    // {
-    //     int index = dot_position;
-    //     for (int i = dot_position; i < len_result; i++)
-    //     {
-    //         mult_result[i - 1] = mult_result[i];
-    //     }
-    //     mult_result[index - 1] = '\0';
-    // }
-
-    // for (int i = 0; i < MAX_MANTISSA_DIGITS; i++)
-    // {
-    //     result->mantissa[i] = mult_result[i];
-    // }
-    // result->mantissa[MAX_MANTISSA_DIGITS] = '\0';
-
-    // result->exponent = number->exponent + strlen(big_int) - 1 - decimal_shift;
-
-    result->exponent = number->exponent - decimal_shift;
+    // результат с точностью до 30 цифр, так что завершаем тут строку
+    mult_result[MAX_INT_DIGITS + 1] = '\0';
     strcpy(result->mantissa, mult_result);
 
     return ERR_OK;
@@ -208,7 +176,9 @@ int main(void)
         return ret;
     }
 
-    printf("Результат: %c%s E %d\n", result.sign, result.mantissa, result.exponent);
+    int new_exp = result.exponent;
+
+    printf("Результат: %c0.%s E %d\n", result.sign, result.mantissa, new_exp);
 
     return ERR_OK;
 }
