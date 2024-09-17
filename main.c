@@ -80,9 +80,7 @@ int multiply_big_numbers(const char *mantissa, const char *big_int, char *result
         result[1] = '\0';
     }
     else
-    {
         result[index] = '\0';
-    }
 
     return ERR_OK;
 }
@@ -100,52 +98,54 @@ int multiply(big_float_t *number, const char *big_int, big_float_t *result)
     int decimal_shift;
 
     int ret = multiply_big_numbers(number->mantissa, big_int, mult_result, &decimal_shift);
+    printf("%s, %d, %d\n", mult_result, decimal_shift, number->exponent);
     if (ret != ERR_OK)
     {
         return ret;
     }
 
-    int len_result = strlen(mult_result);
-    int dot_position = len_result - decimal_shift;
 
-    if (dot_position <= 0)
-    {
-        int zero_padding = -dot_position + 1;
-        int shift = zero_padding - 1;
+    // if (dot_position <= 0)
+    // {
+    //     int zero_padding = -dot_position + 1;
+    //     int shift = zero_padding - 1;
 
-        for (int i = len_result - 1; i >= 0; i--)
-        {
-            if (shift + i < MAX_MANTISSA_DIGITS)
-            {
-                mult_result[shift + i] = mult_result[i];
-            }
-        }
+    //     for (int i = len_result - 1; i >= 0; i--)
+    //     {
+    //         if (shift + i < MAX_MANTISSA_DIGITS)
+    //         {
+    //             mult_result[shift + i] = mult_result[i];
+    //         }
+    //     }
 
-        for (int i = 0; i < shift; i++)
-        {
-            mult_result[i] = '0';
-        }
+    //     for (int i = 0; i < shift; i++)
+    //     {
+    //         mult_result[i] = '0';
+    //     }
 
-        mult_result[zero_padding - 1] = '\0';
-        decimal_shift = zero_padding - 1;
-    }
-    else
-    {
-        int index = dot_position;
-        for (int i = dot_position; i < len_result; i++)
-        {
-            mult_result[i - 1] = mult_result[i];
-        }
-        mult_result[index - 1] = '\0';
-    }
+    //     mult_result[zero_padding - 1] = '\0';
+    //     decimal_shift = zero_padding - 1;
+    // }
+    // else
+    // {
+    //     int index = dot_position;
+    //     for (int i = dot_position; i < len_result; i++)
+    //     {
+    //         mult_result[i - 1] = mult_result[i];
+    //     }
+    //     mult_result[index - 1] = '\0';
+    // }
 
-    for (int i = 0; i < MAX_MANTISSA_DIGITS; i++)
-    {
-        result->mantissa[i] = mult_result[i];
-    }
-    result->mantissa[MAX_MANTISSA_DIGITS] = '\0';
+    // for (int i = 0; i < MAX_MANTISSA_DIGITS; i++)
+    // {
+    //     result->mantissa[i] = mult_result[i];
+    // }
+    // result->mantissa[MAX_MANTISSA_DIGITS] = '\0';
 
-    result->exponent = number->exponent + strlen(big_int) - 1 - decimal_shift;
+    // result->exponent = number->exponent + strlen(big_int) - 1 - decimal_shift;
+
+    result->exponent = number->exponent - decimal_shift;
+    strcpy(result->mantissa, mult_result);
 
     return ERR_OK;
 }
