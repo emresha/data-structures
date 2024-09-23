@@ -252,7 +252,7 @@ int main(void)
 
     if (result.mantissa[0] == '\0')
     {
-        printf("Результат: +0 E 0\n");
+        printf("Результат: +0.0 E 0\n");
         return ERR_OK;
     }
 
