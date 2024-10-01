@@ -20,6 +20,12 @@ typedef struct
     int exponent;
 } big_float_t;
 
+/* 
+notes:
+1. добавить кратко что делает программа и размеры данных
+2. 
+*/ 
+
 // преобразование мантиссы числа с плавающей точкой в целое число
 // mantissa - мантисса числа
 // int_mantissa - целая часть мантиссы
@@ -160,25 +166,36 @@ int multiply(big_float_t *number, char *big_int, big_float_t *result)
 
 // ввод числа с плавающей точкой
 // number - число с плавающей точкой
+// ввод числа с плавающей точкой
 int input_big_float(big_float_t *number)
 {
+    char input[100];
     char exp_sign;
+    int exponent;
+
+    printf("Суммарная длина мантиссы (m+n) должна быть до 40 значащих цифр,\nа величина порядка K - до 5 цифр,\nцелое число должно быть длиной до 30 десятичных цифр.\n");
+    printf("Результат выдаётся в форме ±0.m1 Е ±K1, где m1 - до 30 значащих цифр, а K1 - до 5 цифр.\n");
     printf("Введите число в формате ±m.n E ±K: ");
-    // считывание числа в формате ±m.n E ±K
-    if (scanf(" %c%s E %c%u", &number->sign, number->mantissa, &exp_sign, &number->exponent) != 4)
+
+    if (fgets(input, sizeof(input), stdin) == NULL)
         return ERR_IO;
 
-    if (number->exponent > 99999 || number->exponent < -99999)
+    int parsed = sscanf(input, " %c%40s E %c%d", &number->sign, number->mantissa, &exp_sign, &exponent);
+
+    if (parsed != 4)
+        return ERR_IO;
+
+    if (strlen(number->mantissa) > MAX_MANTISSA_DIGITS)
         return ERR_RANGE;
-    
-    if (exp_sign != '-' && exp_sign != '+')
+
+    if (number->sign != '+' && number->sign != '-')
         return ERR_IO;
 
     if (exp_sign == '-')
-        number->exponent = -number->exponent;
+        exponent = -exponent;
+    number->exponent = exponent;
 
-    // проверка введенного числа
-    if ((number->sign != '+' && number->sign != '-') || strlen(number->mantissa) > MAX_MANTISSA_DIGITS)
+    if (abs(number->exponent) > 99999)
         return ERR_RANGE;
 
     return ERR_OK;
@@ -187,21 +204,27 @@ int input_big_float(big_float_t *number)
 // ввод целого числа
 int input_big_int(char *big_int)
 {
+    char input[100];
     printf("Введите целое число до 30 цифр: ");
-    // считывание целого числа
-    if (scanf("%s", big_int) != 1)
-    {
+
+    if (fgets(input, sizeof(input), stdin) == NULL)
         return ERR_IO;
-    }
 
-    // проверка введенного числа
-    if (strlen(big_int) > MAX_INT_DIGITS)
-    {
+    input[strcspn(input, "\n")] = '\0';
+
+    if (strlen(input) > MAX_INT_DIGITS || strlen(input) == 0)
         return ERR_RANGE;
+
+    for (int i = 0; i < strlen(input); i++)
+    {
+        if (!isdigit(input[i]) && input[i] != '-' && input[i] != '+')
+            return ERR_IO;
     }
 
+    strcpy(big_int, input);
     return ERR_OK;
 }
+
 
 // удаление нулей в конце числа и перенос их в показатель степени
 // result - результат умножения
