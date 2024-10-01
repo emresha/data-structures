@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>         // Для измерения времени
-#include <sys/resource.h> // Для оценки памяти
+#include <time.h>
+#include <sys/resource.h>
 
 #define MAX_BOOKS 100
 
@@ -12,7 +12,8 @@ typedef enum
     TECHNICAL,
     FICTION,
     CHILDREN
-} BookType;
+} 
+BookType;
 
 // Техническая литература
 typedef struct
@@ -20,20 +21,23 @@ typedef struct
     char branch[50];
     char origin[20];
     int year;
-} Technical;
+}
+Technical;
 
 // Художественная литература
 typedef struct
 {
     char genre[30];
-} Fiction;
+}
+Fiction;
 
 // Детская литература
 typedef struct
 {
     int min_age;
     char genre[30];
-} Children;
+}
+Children;
 
 // Дополнительные поля для каждого типа литературы
 typedef union
@@ -41,7 +45,8 @@ typedef union
     Technical tech;
     Fiction fiction;
     Children children;
-} BookDetails;
+}
+BookDetails;
 
 // Структура книги
 typedef struct
@@ -52,7 +57,8 @@ typedef struct
     int pages;
     BookType type;
     BookDetails details;
-} Book;
+}
+Book;
 
 // Функции для работы с базой данных
 void add_book(Book books[], int *book_count);
@@ -64,7 +70,7 @@ void measure_sorting_performance(Book books[], int book_count);
 
 // Функции сортировки
 void bubble_sort_books(Book books[], int n);
-void quicksort_books(Book books[], int low, int high);
+void quicksort_books(Book books[], int count);
 
 // Вспомогательные функции
 void print_memory_usage();
@@ -131,7 +137,7 @@ int main(void)
         printf("7. Выход\n");
         printf("Ваш выбор: ");
         scanf("%d", &choice);
-        getchar(); // Для удаления символа новой строки
+        getchar();
 
         switch (choice)
         {
@@ -143,7 +149,7 @@ int main(void)
             char title[100];
             printf("Введите название книги для удаления: ");
             fgets(title, 100, stdin);
-            title[strcspn(title, "\n")] = '\0'; // Удаление новой строки
+            title[strcspn(title, "\n")] = '\0';
             delete_book_by_title(books, &book_count, title);
             break;
         }
@@ -161,7 +167,7 @@ int main(void)
             char author[50];
             printf("Введите фамилию автора: ");
             fgets(author, 50, stdin);
-            author[strcspn(author, "\n")] = '\0'; // Удаление новой строки
+            author[strcspn(author, "\n")] = '\0';
             display_author_novels(books, book_count, author);
             break;
         }
@@ -334,9 +340,9 @@ int compare_books_by_author(const void *a, const void *b)
 }
 
 // Функция быстрой сортировки с использованием qsort
-void quicksort_books(Book books[], int low, int high)
+void quicksort_books(Book books[], int count)
 {
-    qsort(books + low, high - low + 1, sizeof(Book), compare_books_by_author);
+    qsort(books, count, sizeof(Book), compare_books_by_author);
 }
 
 void display_sorted_books_by_author(Book books[], int book_count)
@@ -349,7 +355,7 @@ void display_sorted_books_by_author(Book books[], int book_count)
     display_books(temp_books, book_count);
 
     memcpy(temp_books, books, sizeof(Book) * book_count);
-    quicksort_books(temp_books, 0, book_count - 1);
+    quicksort_books(temp_books, book_count);
     printf("\nКниги, отсортированные по автору (быстрая сортировка):\n");
     display_books(temp_books, book_count);
 }
@@ -374,7 +380,7 @@ void measure_sorting_performance(Book books[], int book_count)
     memcpy(temp_books, books, sizeof(Book) * book_count);
 
     start_time = clock();
-    quicksort_books(temp_books, 0, book_count - 1);
+    quicksort_books(temp_books, book_count);
     end_time = clock();
     printf("\nБыстрая сортировка:\n");
     printf("Время выполнения: %.12f секунд\n", (double)(end_time - start_time) / CLOCKS_PER_SEC);
