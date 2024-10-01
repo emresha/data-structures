@@ -150,6 +150,9 @@ int multiply(big_float_t *number, char *big_int, big_float_t *result)
     }
 
     result->exponent = number->exponent - decimal_shift;
+    if (strlen(mult_result) > 30)
+        mult_result[30] = '\0';
+
     strcpy(result->mantissa, mult_result);
 
     return ERR_OK;
@@ -165,6 +168,9 @@ int input_big_float(big_float_t *number)
     if (scanf(" %c%s E %c%u", &number->sign, number->mantissa, &exp_sign, &number->exponent) != 4)
         return ERR_IO;
 
+    if (number->exponent > 99999 || number->exponent < -99999)
+        return ERR_RANGE;
+    
     if (exp_sign != '-' && exp_sign != '+')
         return ERR_IO;
 
@@ -270,11 +276,6 @@ int main(void)
     // printf("\'%s\', %d %d %zu\n", result.mantissa, result.exponent, add_exp, strlen(result.mantissa));
 
     char exp_sign = (result.exponent < 0) ? '\0' : '+';
-
-    if (strlen(result.mantissa) > 35)
-    {
-        result.mantissa[35] = '\0';
-    }
 
     printf("Результат: %c0.%s E %c%d\n", result.sign, result.mantissa, exp_sign, result.exponent + (int)strlen(result.mantissa) + add_exp);
 
