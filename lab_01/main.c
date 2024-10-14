@@ -5,6 +5,7 @@
 
 #define MAX_MANTISSA_DIGITS 40
 #define MAX_INT_DIGITS 30
+#define MAX_RES_DIGITS 30
 #define ERR_OK 0
 #define ERR_IO 1
 #define ERR_RANGE 2
@@ -119,49 +120,81 @@ int multiply_big_numbers(const char *mantissa, char *big_int, char *result, int 
 // result - результат умножения
 int multiply(big_float_t *number, char *big_int, big_float_t *result)
 {
-    // проверка на допустимое количество цифр в целом числе
     if (strlen(big_int) > MAX_INT_DIGITS)
     {
         return ERR_RANGE;
     }
 
-    // установка знака результата
     result->sign = (number->sign == '-') ? '-' : '+';
 
-    // установка знака результата от знака целого числа
     if (big_int[0] == '-' || big_int[0] == '+')
     {
         if (big_int[0] == '-')
             result->sign = (result->sign == '-') ? '+' : '-';
         
-        for (int i = 0; i < strlen(big_int); i++)
+        for (int i = 0; big_int[i] != '\0'; i++)
         {
             big_int[i] = big_int[i + 1];
         }
-
-        big_int[strlen(big_int)] = '\0';
-        // printf("\'%s\'\n", big_int);
     }
-
 
     char mult_result[MAX_MANTISSA_DIGITS + MAX_INT_DIGITS + 1];
     int decimal_shift;
 
-    // умножение мантиссы на целое число
     int ret = multiply_big_numbers(number->mantissa, big_int, mult_result, &decimal_shift);
-    // printf("%s, %d, %d\n", mult_result, decimal_shift, number->exponent);
     if (ret != ERR_OK)
     {
         return ret;
     }
 
     result->exponent = number->exponent - decimal_shift;
-    if (strlen(mult_result) > 30)
-        mult_result[30] = '\0';
+
+
+    int result_len = strlen(mult_result);
+    if (result_len > MAX_RES_DIGITS)
+    {
+        result->exponent += strlen(mult_result) - MAX_RES_DIGITS;
+        if (mult_result[MAX_RES_DIGITS] >= '5')
+        {
+            int carry = 1;
+            for (int i = MAX_RES_DIGITS - 1; i >= 0 && carry; i--)
+            {
+                if (mult_result[i] < '9') {
+                    mult_result[i]++;
+                    carry = 0;
+                } else {
+                    mult_result[i] = '0';
+                }
+            }
+
+            if (carry)
+            {
+                memmove(&mult_result[1], mult_result, MAX_RES_DIGITS);
+                mult_result[0] = '1';
+                result->exponent++;
+            }
+        }
+
+        mult_result[MAX_RES_DIGITS] = '\0';
+    }
+
 
     strcpy(result->mantissa, mult_result);
 
     return ERR_OK;
+}
+
+int check_str(char *str)
+{
+    int rc = ERR_OK;
+
+    for (size_t i = 0; i < strlen(str); i++)
+    {
+        if (!isdigit((unsigned char)str[i]))
+            return ERR_IO;
+    }
+
+    return rc;
 }
 
 // ввод числа с плавающей точкой
@@ -172,6 +205,7 @@ int input_big_float(big_float_t *number)
     char input[100];
     char exp_sign;
     int exponent;
+    char exponent_str[100];
 
     printf("Суммарная длина мантиссы (m+n) должна быть до 40 значащих цифр,\nа величина порядка K - до 5 цифр,\nцелое число должно быть длиной до 30 десятичных цифр.\n");
     printf("Результат выдаётся в форме ±0.m1 Е ±K1, где m1 - до 30 значащих цифр, а K1 - до 5 цифр.\n");
@@ -181,7 +215,12 @@ int input_big_float(big_float_t *number)
     if (fgets(input, sizeof(input), stdin) == NULL)
         return ERR_IO;
 
-    int parsed = sscanf(input, " %c%41s E %c%d", &number->sign, number->mantissa, &exp_sign, &exponent);
+    int parsed = sscanf(input, "%c%40s E %c%99s", &number->sign, number->mantissa, &exp_sign, exponent_str);
+
+    if (check_str(exponent_str) || strlen(exponent_str) > 6)
+        return ERR_IO;
+
+    exponent = atoi(exponent_str);
 
     if (parsed != 4)
         return ERR_IO;
@@ -280,7 +319,6 @@ int main(void)
     ret = multiply(&number, big_int, &result);
     if (ret != ERR_OK)
     {
-        printf("Ошибка умножения. Код ошибки: %d\n", ret);
         return ret;
     }
 
@@ -294,6 +332,12 @@ int main(void)
     }
 
     int add_exp;
+
+    if (abs(result.exponent) > 99999)
+    {
+        printf("Ошибка умножения. Код ошибки: %d\n", ERR_RANGE);
+        return ERR_RANGE;
+    }
 
     if (strchr(result.mantissa, '.') == NULL)
     {
