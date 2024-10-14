@@ -6,49 +6,38 @@
 
 #define MAX_BOOKS 100
 
-// Тип литературы
 typedef enum
 {
     TECHNICAL,
     FICTION,
     CHILDREN
-} 
-BookType;
+} BookType;
 
-// Техническая литература
 typedef struct
 {
     char branch[50];
     char origin[20];
     int year;
-}
-Technical;
+} Technical;
 
-// Художественная литература
 typedef struct
 {
     char genre[30];
-}
-Fiction;
+} Fiction;
 
-// Детская литература
 typedef struct
 {
     int min_age;
     char genre[30];
-}
-Children;
+} Children;
 
-// Дополнительные поля для каждого типа литературы
 typedef union
 {
     Technical tech;
     Fiction fiction;
     Children children;
-}
-BookDetails;
+} BookDetails;
 
-// Структура книги
 typedef struct
 {
     char author[50];
@@ -57,71 +46,74 @@ typedef struct
     int pages;
     BookType type;
     BookDetails details;
-}
-Book;
+} Book;
 
-// Функции для работы с базой данных
+typedef struct
+{
+    int index;
+    char author[50];
+} AuthorIndex;
+
 void add_book(Book books[], int *book_count);
 void delete_book_by_title(Book books[], int *book_count, const char *title);
 void display_books(Book books[], int book_count);
 void display_sorted_books_by_author(Book books[], int book_count);
-void display_author_novels(Book books[], int book_count, const char *author);
+void display_sorted_books_using_author_table(Book books[], int book_count);
 void measure_sorting_performance(Book books[], int book_count);
 
-// Функции сортировки
-void bubble_sort_books(Book books[], int n);
 void quicksort_books(Book books[], int count);
+void quicksort_author_table(AuthorIndex author_table[], int count);
 
-// Вспомогательные функции
 void print_memory_usage();
 void print_table_header();
 void print_book_table_row(const Book *book);
+int compare_books_by_author(const void *a, const void *b);
+int compare_author_index(const void *a, const void *b);
 
 int main(void)
 {
     int book_count = 40;
     Book books[MAX_BOOKS] = {
-        {"Author1", "Technical Book 1", "Publisher1", 100, TECHNICAL, {.tech = {"Computer Science", "Domestic", 2020}}},
-        {"Author2", "Technical Book 2", "Publisher2", 150, TECHNICAL, {.tech = {"Electronics", "Translated", 2018}}},
-        {"Author3", "Fiction Book 1", "Publisher3", 200, FICTION, {.fiction = {"Novel"}}},
-        {"Author4", "Fiction Book 2", "Publisher4", 250, FICTION, {.fiction = {"Poetry"}}},
-        {"Author5", "Children Book 1", "Publisher5", 50, CHILDREN, {.children = {5, "Fairy Tales"}}},
-        {"Author6", "Children Book 2", "Publisher6", 60, CHILDREN, {.children = {7, "Poems"}}},
-        {"Author7", "Technical Book 3", "Publisher7", 120, TECHNICAL, {.tech = {"Physics", "Domestic", 2019}}},
-        {"Author8", "Technical Book 4", "Publisher8", 180, TECHNICAL, {.tech = {"Mathematics", "Translated", 2017}}},
-        {"Author9", "Fiction Book 3", "Publisher9", 220, FICTION, {.fiction = {"Play"}}},
-        {"Author10", "Fiction Book 4", "Publisher10", 270, FICTION, {.fiction = {"Novel"}}},
-        {"Author11", "Children Book 3", "Publisher11", 55, CHILDREN, {.children = {6, "Fairy Tales"}}},
-        {"Author12", "Children Book 4", "Publisher12", 65, CHILDREN, {.children = {8, "Poems"}}},
-        {"Author13", "Technical Book 5", "Publisher13", 130, TECHNICAL, {.tech = {"Chemistry", "Domestic", 2021}}},
-        {"Author14", "Technical Book 6", "Publisher14", 190, TECHNICAL, {.tech = {"Biology", "Translated", 2016}}},
-        {"Author15", "Fiction Book 5", "Publisher15", 230, FICTION, {.fiction = {"Novel"}}},
-        {"Author16", "Fiction Book 6", "Publisher16", 280, FICTION, {.fiction = {"Poetry"}}},
-        {"Author17", "Children Book 5", "Publisher17", 70, CHILDREN, {.children = {9, "Fairy Tales"}}},
-        {"Author18", "Children Book 6", "Publisher18", 75, CHILDREN, {.children = {10, "Poems"}}},
-        {"Author19", "Technical Book 7", "Publisher19", 140, TECHNICAL, {.tech = {"Engineering", "Domestic", 2022}}},
-        {"Author20", "Technical Book 8", "Publisher20", 200, TECHNICAL, {.tech = {"Astronomy", "Translated", 2015}}},
-        {"Author21", "Fiction Book 7", "Publisher21", 240, FICTION, {.fiction = {"Play"}}},
-        {"Author22", "Fiction Book 8", "Publisher22", 290, FICTION, {.fiction = {"Novel"}}},
-        {"Author23", "Children Book 7", "Publisher23", 80, CHILDREN, {.children = {11, "Fairy Tales"}}},
-        {"Author24", "Children Book 8", "Publisher24", 85, CHILDREN, {.children = {12, "Poems"}}},
-        {"Author25", "Technical Book 9", "Publisher25", 150, TECHNICAL, {.tech = {"Geology", "Domestic", 2023}}},
-        {"Author26", "Technical Book 10", "Publisher26", 210, TECHNICAL, {.tech = {"Meteorology", "Translated", 2014}}},
-        {"Author27", "Fiction Book 9", "Publisher27", 250, FICTION, {.fiction = {"Novel"}}},
-        {"Author28", "Fiction Book 10", "Publisher28", 300, FICTION, {.fiction = {"Poetry"}}},
-        {"Author29", "Children Book 9", "Publisher29", 90, CHILDREN, {.children = {13, "Fairy Tales"}}},
-        {"Author30", "Children Book 10", "Publisher30", 95, CHILDREN, {.children = {14, "Poems"}}},
-        {"Author31", "Technical Book 11", "Publisher31", 160, TECHNICAL, {.tech = {"Oceanography", "Domestic", 2024}}},
-        {"Author32", "Technical Book 12", "Publisher32", 220, TECHNICAL, {.tech = {"Geography", "Translated", 2013}}},
-        {"Author33", "Fiction Book 11", "Publisher33", 260, FICTION, {.fiction = {"Play"}}},
-        {"Author34", "Fiction Book 12", "Publisher34", 310, FICTION, {.fiction = {"Novel"}}},
-        {"Author35", "Children Book 11", "Publisher35", 100, CHILDREN, {.children = {15, "Fairy Tales"}}},
-        {"Author36", "Children Book 12", "Publisher36", 105, CHILDREN, {.children = {16, "Poems"}}},
-        {"Author37", "Technical Book 13", "Publisher37", 170, TECHNICAL, {.tech = {"Anthropology", "Domestic", 2025}}},
-        {"Author38", "Technical Book 14", "Publisher38", 230, TECHNICAL, {.tech = {"Sociology", "Translated", 2012}}},
-        {"Author39", "Fiction Book 13", "Publisher39", 270, FICTION, {.fiction = {"Novel"}}},
-        {"Author40", "Fiction Book 14", "Publisher40", 320, FICTION, {.fiction = {"Poetry"}}}
-    };
+        {"Isaac Newton", "Principia Mathematica", "Royal Society", 500, TECHNICAL, {.tech = {"Physics", "Translated", 1687}}},
+        {"Alan Turing", "Computing Machinery and Intelligence", "Oxford Press", 150, TECHNICAL, {.tech = {"Computer Science", "Domestic", 1950}}},
+        {"George Orwell", "1984", "Secker & Warburg", 328, FICTION, {.fiction = {"Dystopian"}}},
+        {"J.R.R. Tolkien", "The Lord of the Rings", "Allen & Unwin", 1178, FICTION, {.fiction = {"Fantasy"}}},
+        {"Dr. Seuss", "The Cat in the Hat", "Random House", 72, CHILDREN, {.children = {4, "Rhyming"}}},
+        {"Lewis Carroll", "Alice's Adventures in Wonderland", "Macmillan", 96, CHILDREN, {.children = {7, "Fantasy"}}},
+        {"Albert Einstein", "Relativity: The Special and General Theory", "Henry Holt", 168, TECHNICAL, {.tech = {"Physics", "Translated", 1916}}},
+        {"Marie Curie", "Radioactive Substances", "French Academy of Sciences", 120, TECHNICAL, {.tech = {"Chemistry", "Translated", 1903}}},
+        {"Jane Austen", "Pride and Prejudice", "T. Egerton", 279, FICTION, {.fiction = {"Romance"}}},
+        {"Leo Tolstoy", "War and Peace", "The Russian Messenger", 1225, FICTION, {.fiction = {"Historical"}}},
+        {"J.K. Rowling", "Harry Potter and the Philosopher's Stone", "Bloomsbury", 223, CHILDREN, {.children = {9, "Fantasy"}}},
+        {"A.A. Milne", "Winnie the Pooh", "Methuen & Co.", 160, CHILDREN, {.children = {5, "Fantasy"}}},
+        {"Stephen Hawking", "A Brief History of Time", "Bantam Books", 256, TECHNICAL, {.tech = {"Cosmology", "Domestic", 1988}}},
+        {"Carl Sagan", "Cosmos", "Random House", 365, TECHNICAL, {.tech = {"Astronomy", "Domestic", 1980}}},
+        {"Gabriel García Márquez", "One Hundred Years of Solitude", "Harper & Row", 417, FICTION, {.fiction = {"Magic Realism"}}},
+        {"Fyodor Dostoevsky", "Crime and Punishment", "The Russian Messenger", 671, FICTION, {.fiction = {"Psychological"}}},
+        {"Roald Dahl", "Charlie and the Chocolate Factory", "Alfred A. Knopf", 176, CHILDREN, {.children = {8, "Adventure"}}},
+        {"C.S. Lewis", "The Chronicles of Narnia: The Lion, the Witch and the Wardrobe", "Geoffrey Bles", 206, CHILDREN, {.children = {9, "Fantasy"}}},
+        {"Charles Darwin", "On the Origin of Species", "John Murray", 502, TECHNICAL, {.tech = {"Biology", "Domestic", 1859}}},
+        {"Richard Feynman", "The Feynman Lectures on Physics", "Addison-Wesley", 1552, TECHNICAL, {.tech = {"Physics", "Domestic", 1964}}},
+        {"Harper Lee", "To Kill a Mockingbird", "J.B. Lippincott & Co.", 281, FICTION, {.fiction = {"Southern Gothic"}}},
+        {"Mark Twain", "The Adventures of Huckleberry Finn", "Chatto & Windus", 366, FICTION, {.fiction = {"Adventure"}}},
+        {"E.B. White", "Charlotte's Web", "Harper & Brothers", 192, CHILDREN, {.children = {6, "Animal Fiction"}}},
+        {"L. Frank Baum", "The Wonderful Wizard of Oz", "George M. Hill Company", 272, CHILDREN, {.children = {7, "Fantasy"}}},
+        {"Nikola Tesla", "My Inventions", "Electrical Experimenter", 144, TECHNICAL, {.tech = {"Electrical Engineering", "Domestic", 1919}}},
+        {"James Clerk Maxwell", "A Treatise on Electricity and Magnetism", "Clarendon Press", 550, TECHNICAL, {.tech = {"Physics", "Domestic", 1873}}},
+        {"Herman Melville", "Moby-Dick", "Harper & Brothers", 635, FICTION, {.fiction = {"Adventure"}}},
+        {"Franz Kafka", "The Metamorphosis", "Kurt Wolff Verlag", 201, FICTION, {.fiction = {"Absurdist"}}},
+        {"Beatrix Potter", "The Tale of Peter Rabbit", "Frederick Warne & Co.", 72, CHILDREN, {.children = {3, "Animal Fiction"}}},
+        {"Antoine de Saint-Exupéry", "The Little Prince", "Reynal & Hitchcock", 96, CHILDREN, {.children = {6, "Fantasy"}}},
+        {"Sigmund Freud", "The Interpretation of Dreams", "Franz Deuticke", 600, TECHNICAL, {.tech = {"Psychology", "Translated", 1899}}},
+        {"Charles Babbage", "Passages from the Life of a Philosopher", "Longman, Green", 438, TECHNICAL, {.tech = {"Mathematics", "Domestic", 1864}}},
+        {"Ernest Hemingway", "The Old Man and the Sea", "Charles Scribner's Sons", 127, FICTION, {.fiction = {"Adventure"}}},
+        {"Virginia Woolf", "Mrs Dalloway", "Hogarth Press", 296, FICTION, {.fiction = {"Modernist"}}},
+        {"Maurice Sendak", "Where the Wild Things Are", "Harper & Row", 48, CHILDREN, {.children = {4, "Fantasy"}}},
+        {"Lewis Carroll", "Through the Looking-Glass", "Macmillan", 224, CHILDREN, {.children = {8, "Fantasy"}}},
+        {"Thomas Edison", "The Diary of Thomas Edison", "Harper & Brothers", 350, TECHNICAL, {.tech = {"Inventions", "Domestic", 1930}}},
+        {"Gregor Mendel", "Experiments on Plant Hybridization", "Verhandlungen des naturforschenden Vereins", 150, TECHNICAL, {.tech = {"Genetics", "Translated", 1866}}},
+        {"William Shakespeare", "Hamlet", "Oxford University Press", 400, FICTION, {.fiction = {"Tragedy"}}},
+        {"Jules Verne", "Twenty Thousand Leagues Under the Sea", "Pierre-Jules Hetzel", 437, FICTION, {.fiction = {"Science Fiction"}}}};
 
     int choice;
 
@@ -131,9 +123,9 @@ int main(void)
         printf("1. Добавить книгу\n");
         printf("2. Удалить книгу по названию\n");
         printf("3. Просмотреть список книг\n");
-        printf("4. Просмотреть книги, отсортированные по автору\n");
+        printf("4. Просмотреть книги, отсортированные по автору (обычная сортировка)\n");
         printf("5. Измерить производительность сортировок\n");
-        printf("6. Поиск романов автора\n");
+        printf("6. Просмотреть книги, отсортированные по автору (таблица авторов)\n");
         printf("7. Выход\n");
         printf("Ваш выбор: ");
         scanf("%d", &choice);
@@ -163,14 +155,8 @@ int main(void)
             measure_sorting_performance(books, book_count);
             break;
         case 6:
-        {
-            char author[50];
-            printf("Введите фамилию автора: ");
-            fgets(author, 50, stdin);
-            author[strcspn(author, "\n")] = '\0';
-            display_author_novels(books, book_count, author);
+            display_sorted_books_using_author_table(books, book_count);
             break;
-        }
         case 7:
             exit(0);
         default:
@@ -229,12 +215,25 @@ void add_book(Book books[], int *book_count)
         fgets(new_book.details.tech.branch, 50, stdin);
         new_book.details.tech.branch[strcspn(new_book.details.tech.branch, "\n")] = '\0';
 
-        printf("Введите происхождение (Отечественная/Переводная): ");
-        fgets(new_book.details.tech.origin, 20, stdin);
-        new_book.details.tech.origin[strcspn(new_book.details.tech.origin, "\n")] = '\0';
+        while (1)
+        {
+            printf("Введите происхождение (Отечественная/Переводная): ");
+            fgets(new_book.details.tech.origin, 20, stdin);
+            new_book.details.tech.origin[strcspn(new_book.details.tech.origin, "\n")] = '\0';
+
+            if (strcmp(new_book.details.tech.origin, "Отечественная") == 0 || strcmp(new_book.details.tech.origin, "Переводная") == 0)
+            {
+                break;
+            }
+            else
+            {
+                printf("Ошибка: Введите корректное происхождение (Отечественная или Переводная).\n");
+            }
+        }
 
         printf("Введите год издания: ");
-        while (scanf("%d", &new_book.details.tech.year) != 1 || new_book.details.tech.year < 0)
+        int rc = scanf("%d", &new_book.details.tech.year);
+        while (rc != 1 || new_book.details.tech.year < 0)
         {
             printf("Ошибка: Введите положительное число (год): ");
             while (getchar() != '\n')
@@ -244,9 +243,21 @@ void add_book(Book books[], int *book_count)
         break;
 
     case FICTION:
-        printf("Введите жанр (роман, пьеса, поэзия): ");
-        fgets(new_book.details.fiction.genre, 30, stdin);
-        new_book.details.fiction.genre[strcspn(new_book.details.fiction.genre, "\n")] = '\0';
+        while (1)
+        {
+            printf("Введите жанр (роман, пьеса, поэзия): ");
+            fgets(new_book.details.fiction.genre, 30, stdin);
+            new_book.details.fiction.genre[strcspn(new_book.details.fiction.genre, "\n")] = '\0';
+
+            if (strcmp(new_book.details.fiction.genre, "роман") == 0 || strcmp(new_book.details.fiction.genre, "пьеса") == 0 || strcmp(new_book.details.fiction.genre, "поэзия") == 0)
+            {
+                break;
+            }
+            else
+            {
+                printf("Ошибка: Введите корректный жанр (роман, пьеса или поэзия).\n");
+            }
+        }
         break;
 
     case CHILDREN:
@@ -259,9 +270,21 @@ void add_book(Book books[], int *book_count)
         }
         getchar();
 
-        printf("Введите тип детской литературы (стихи, сказки): ");
-        fgets(new_book.details.children.genre, 30, stdin);
-        new_book.details.children.genre[strcspn(new_book.details.children.genre, "\n")] = '\0';
+        while (1)
+        {
+            printf("Введите тип детской литературы (стихи, сказки): ");
+            fgets(new_book.details.children.genre, 30, stdin);
+            new_book.details.children.genre[strcspn(new_book.details.children.genre, "\n")] = '\0';
+
+            if (strcmp(new_book.details.children.genre, "стихи") == 0 || strcmp(new_book.details.children.genre, "сказки") == 0)
+            {
+                break;
+            }
+            else
+            {
+                printf("Ошибка: Введите корректный тип детской литературы (стихи или сказки).\n");
+            }
+        }
         break;
     }
 
@@ -293,103 +316,7 @@ void delete_book_by_title(Book books[], int *book_count, const char *title)
     }
 }
 
-void display_author_novels(Book books[], int book_count, const char *author)
-{
-    int found = 0;
-    printf("\nРоманы автора %s:\n", author);
-    for (int i = 0; i < book_count; i++)
-    {
-        if (strcmp(books[i].author, author) == 0 && books[i].type == FICTION &&
-            strcmp(books[i].details.fiction.genre, "роман") == 0)
-        {
-            printf("Название: %s, Издательство: %s, Страниц: %d\n",
-                   books[i].title, books[i].publisher, books[i].pages);
-            found = 1;
-        }
-    }
-
-    if (!found)
-    {
-        printf("Романы не найдены.\n");
-    }
-}
-
-// Функции сортировки и измерения производительности
-void bubble_sort_books(Book books[], int n)
-{
-    for (int i = 0; i < n - 1; i++)
-    {
-        for (int j = 0; j < n - 1 - i; j++)
-        {
-            if (strcmp(books[j].author, books[j + 1].author) > 0)
-            {
-                Book temp = books[j];
-                books[j] = books[j + 1];
-                books[j + 1] = temp;
-            }
-        }
-    }
-}
-
-// Функция сравнения для qsort
-int compare_books_by_author(const void *a, const void *b)
-{
-    const Book *book1 = (const Book *)a;
-    const Book *book2 = (const Book *)b;
-    return strcmp(book1->author, book2->author);
-}
-
-// Функция быстрой сортировки с использованием qsort
-void quicksort_books(Book books[], int count)
-{
-    qsort(books, count, sizeof(Book), compare_books_by_author);
-}
-
-void display_sorted_books_by_author(Book books[], int book_count)
-{
-    Book temp_books[MAX_BOOKS];
-    memcpy(temp_books, books, sizeof(Book) * book_count);
-
-    bubble_sort_books(temp_books, book_count);
-    printf("\nКниги, отсортированные по автору (пузырьковая сортировка):\n");
-    display_books(temp_books, book_count);
-
-    memcpy(temp_books, books, sizeof(Book) * book_count);
-    quicksort_books(temp_books, book_count);
-    printf("\nКниги, отсортированные по автору (быстрая сортировка):\n");
-    display_books(temp_books, book_count);
-}
-
-// Функция измерения производительности сортировок
-void measure_sorting_performance(Book books[], int book_count)
-{
-    struct rusage usage;
-
-    Book temp_books[MAX_BOOKS];
-    memcpy(temp_books, books, sizeof(Book) * book_count);
-
-    clock_t start_time = clock();
-    bubble_sort_books(temp_books, book_count);
-    clock_t end_time = clock();
-    printf("\nПузырьковая сортировка:\n");
-    printf("Время выполнения: %.12f секунд\n", (double)(end_time - start_time) / CLOCKS_PER_SEC);
-
-    getrusage(RUSAGE_SELF, &usage);
-    printf("Использование памяти: %ld KB\n", usage.ru_maxrss);
-
-    memcpy(temp_books, books, sizeof(Book) * book_count);
-
-    start_time = clock();
-    quicksort_books(temp_books, book_count);
-    end_time = clock();
-    printf("\nБыстрая сортировка:\n");
-    printf("Время выполнения: %.12f секунд\n", (double)(end_time - start_time) / CLOCKS_PER_SEC);
-
-    getrusage(RUSAGE_SELF, &usage);
-    printf("Использование памяти: %ld KB\n", usage.ru_maxrss);
-}
-
-// Вспомогательные функции для вывода книг
+// Функция вывода книг
 void display_books(Book books[], int book_count)
 {
     print_table_header();
@@ -399,20 +326,104 @@ void display_books(Book books[], int book_count)
     }
 }
 
+// Функция сортировки изначальной таблицы по автору
+void display_sorted_books_by_author(Book books[], int book_count)
+{
+    Book temp_books[MAX_BOOKS];
+    memcpy(temp_books, books, sizeof(Book) * book_count);
+
+    quicksort_books(temp_books, book_count);
+    printf("\nКниги, отсортированные по автору (обычная сортировка):\n");
+    display_books(temp_books, book_count);
+}
+
+// Функция сортировки используя дополнительную таблицу "по ключам"
+void display_sorted_books_using_author_table(Book books[], int book_count)
+{
+    AuthorIndex author_table[MAX_BOOKS];
+
+    for (int i = 0; i < book_count; i++)
+    {
+        author_table[i].index = i;
+        strcpy(author_table[i].author, books[i].author);
+    }
+
+    quicksort_author_table(author_table, book_count);
+
+    printf("\nКниги, отсортированные по таблице авторов:\n");
+    print_table_header();
+    for (int i = 0; i < book_count; i++)
+    {
+        int idx = author_table[i].index;
+        print_book_table_row(&books[idx]);
+    }
+}
+
+// Замерный эксперимент
+void measure_sorting_performance(Book books[], int book_count)
+{
+    struct rusage usage;
+
+    Book temp_books[MAX_BOOKS];
+    memcpy(temp_books, books, sizeof(Book) * book_count);
+
+    clock_t start_time = clock();
+    quicksort_books(temp_books, book_count);
+    clock_t end_time = clock();
+    printf("\nОбычная сортировка книг:\n");
+    printf("Время выполнения: %.12f секунд\n", (double)(end_time - start_time) / CLOCKS_PER_SEC);
+
+    getrusage(RUSAGE_SELF, &usage);
+    printf("Использование памяти: %ld KB\n", usage.ru_maxrss);
+
+    AuthorIndex author_table[MAX_BOOKS];
+    for (int i = 0; i < book_count; i++)
+    {
+        author_table[i].index = i;
+        strcpy(author_table[i].author, books[i].author);
+    }
+
+    start_time = clock();
+    quicksort_author_table(author_table, book_count);
+    end_time = clock();
+    printf("\nСортировка по таблице авторов:\n");
+    printf("Время выполнения: %.12f секунд\n", (double)(end_time - start_time) / CLOCKS_PER_SEC);
+
+    getrusage(RUSAGE_SELF, &usage);
+    printf("Использование памяти: %ld KB\n", usage.ru_maxrss);
+}
+
+void quicksort_books(Book books[], int count)
+{
+    qsort(books, count, sizeof(Book), compare_books_by_author);
+}
+
+int compare_books_by_author(const void *a, const void *b)
+{
+    const Book *book1 = (const Book *)a;
+    const Book *book2 = (const Book *)b;
+    return strcmp(book1->author, book2->author);
+}
+
+void quicksort_author_table(AuthorIndex author_table[], int count)
+{
+    qsort(author_table, count, sizeof(AuthorIndex), compare_author_index);
+}
+
+int compare_author_index(const void *a, const void *b)
+{
+    const AuthorIndex *ai1 = (const AuthorIndex *)a;
+    const AuthorIndex *ai2 = (const AuthorIndex *)b;
+    return strcmp(ai1->author, ai2->author);
+}
+
 void print_table_header()
 {
-    printf("%-20s %-30s %-20s %-10s\n", "Автор", "Название", "Издательство", "Страницы");
-    printf("------------------------------------------------------------\n");
+    printf("%-20s %-30s %-20s %-10s\n", "Автор", "Название", "Издатель", "Страницы");
+    printf("----------------------------------------------------------------------------------\n");
 }
 
 void print_book_table_row(const Book *book)
 {
     printf("%-20s %-30s %-20s %-10d\n", book->author, book->title, book->publisher, book->pages);
-}
-
-void print_memory_usage()
-{
-    struct rusage usage;
-    getrusage(RUSAGE_SELF, &usage);
-    printf("Использование памяти: %ld KB\n", usage.ru_maxrss);
 }
