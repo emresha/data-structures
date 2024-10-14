@@ -175,18 +175,27 @@ int input_big_float(big_float_t *number)
 
     printf("Суммарная длина мантиссы (m+n) должна быть до 40 значащих цифр,\nа величина порядка K - до 5 цифр,\nцелое число должно быть длиной до 30 десятичных цифр.\n");
     printf("Результат выдаётся в форме ±0.m1 Е ±K1, где m1 - до 30 значащих цифр, а K1 - до 5 цифр.\n");
+    printf("                                   1---5---10---15---20---25---30---35---40---45---50\n");
     printf("Введите число в формате ±m.n E ±K: ");
 
     if (fgets(input, sizeof(input), stdin) == NULL)
         return ERR_IO;
 
-    int parsed = sscanf(input, " %c%40s E %c%d", &number->sign, number->mantissa, &exp_sign, &exponent);
+    int parsed = sscanf(input, " %c%41s E %c%d", &number->sign, number->mantissa, &exp_sign, &exponent);
 
     if (parsed != 4)
         return ERR_IO;
 
-    if (strlen(number->mantissa) > MAX_MANTISSA_DIGITS)
-        return ERR_RANGE;
+    if (strchr(number->mantissa, '.'))
+    {
+        if (strlen(number->mantissa) > MAX_MANTISSA_DIGITS + 1)
+            return ERR_RANGE;
+    }
+    else
+    {
+        if (strlen(number->mantissa) > MAX_MANTISSA_DIGITS)
+            return ERR_RANGE;
+    }
 
     if (number->sign != '+' && number->sign != '-')
         return ERR_IO;
@@ -205,6 +214,7 @@ int input_big_float(big_float_t *number)
 int input_big_int(char *big_int)
 {
     char input[100];
+    printf("                                1---5---10---15---20---25---30---35---40---45---50\n");
     printf("Введите целое число до 30 цифр: ");
 
     if (fgets(input, sizeof(input), stdin) == NULL)
@@ -235,13 +245,9 @@ void delete_zeros(big_float_t *result)
     for (int i = len - 1; i >= 0; i--)
     {
         if (result->mantissa[i] == '0')
-        {
             zeros++;
-        }
         else
-        {
             break;
-        }
     }
     result->mantissa[len - zeros] = '\0';
     result->exponent += zeros;
@@ -251,6 +257,8 @@ int main(void)
 {
     big_float_t number, result;
     char big_int[MAX_INT_DIGITS + 1];
+
+    printf("Программа выполнения умножения вещественного и целого числа,\nвыходящего за разрядную сетку компьютера\n");
 
     // ввод числа с плавающей точкой и целого числа
     int ret = input_big_float(&number);
