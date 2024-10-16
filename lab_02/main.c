@@ -60,6 +60,7 @@ void display_books(Book books[], int book_count);
 void display_sorted_books_by_author(Book books[], int book_count);
 void display_sorted_books_using_author_table(Book books[], int book_count);
 void measure_sorting_performance(Book books[], int book_count);
+void display_author_fiction_books(Book books[], int book_count);
 
 void quicksort_books(Book books[], int count);
 void quicksort_author_table(AuthorIndex author_table[], int count);
@@ -74,46 +75,46 @@ int main(void)
 {
     int book_count = 40;
     Book books[MAX_BOOKS] = {
-        {"Isaac Newton", "Principia Mathematica", "Royal Society", 500, TECHNICAL, {.tech = {"Physics", "Translated", 1687}}},
-        {"Alan Turing", "Computing Machinery and Intelligence", "Oxford Press", 150, TECHNICAL, {.tech = {"Computer Science", "Domestic", 1950}}},
-        {"George Orwell", "1984", "Secker & Warburg", 328, FICTION, {.fiction = {"Dystopian"}}},
-        {"J.R.R. Tolkien", "The Lord of the Rings", "Allen & Unwin", 1178, FICTION, {.fiction = {"Fantasy"}}},
-        {"Dr. Seuss", "The Cat in the Hat", "Random House", 72, CHILDREN, {.children = {4, "Rhyming"}}},
-        {"Lewis Carroll", "Alice's Adventures in Wonderland", "Macmillan", 96, CHILDREN, {.children = {7, "Fantasy"}}},
-        {"Albert Einstein", "Relativity: The Special and General Theory", "Henry Holt", 168, TECHNICAL, {.tech = {"Physics", "Translated", 1916}}},
-        {"Marie Curie", "Radioactive Substances", "French Academy of Sciences", 120, TECHNICAL, {.tech = {"Chemistry", "Translated", 1903}}},
-        {"Jane Austen", "Pride and Prejudice", "T. Egerton", 279, FICTION, {.fiction = {"Romance"}}},
-        {"Leo Tolstoy", "War and Peace", "The Russian Messenger", 1225, FICTION, {.fiction = {"Historical"}}},
-        {"J.K. Rowling", "Harry Potter and the Philosopher's Stone", "Bloomsbury", 223, CHILDREN, {.children = {9, "Fantasy"}}},
-        {"A.A. Milne", "Winnie the Pooh", "Methuen & Co.", 160, CHILDREN, {.children = {5, "Fantasy"}}},
-        {"Stephen Hawking", "A Brief History of Time", "Bantam Books", 256, TECHNICAL, {.tech = {"Cosmology", "Domestic", 1988}}},
-        {"Carl Sagan", "Cosmos", "Random House", 365, TECHNICAL, {.tech = {"Astronomy", "Domestic", 1980}}},
-        {"Gabriel García Márquez", "One Hundred Years of Solitude", "Harper & Row", 417, FICTION, {.fiction = {"Magic Realism"}}},
-        {"Fyodor Dostoevsky", "Crime and Punishment", "The Russian Messenger", 671, FICTION, {.fiction = {"Psychological"}}},
-        {"Roald Dahl", "Charlie and the Chocolate Factory", "Alfred A. Knopf", 176, CHILDREN, {.children = {8, "Adventure"}}},
-        {"C.S. Lewis", "The Chronicles of Narnia: The Lion, the Witch and the Wardrobe", "Geoffrey Bles", 206, CHILDREN, {.children = {9, "Fantasy"}}},
-        {"Charles Darwin", "On the Origin of Species", "John Murray", 502, TECHNICAL, {.tech = {"Biology", "Domestic", 1859}}},
-        {"Richard Feynman", "The Feynman Lectures on Physics", "Addison-Wesley", 1552, TECHNICAL, {.tech = {"Physics", "Domestic", 1964}}},
-        {"Harper Lee", "To Kill a Mockingbird", "J.B. Lippincott & Co.", 281, FICTION, {.fiction = {"Southern Gothic"}}},
-        {"Mark Twain", "The Adventures of Huckleberry Finn", "Chatto & Windus", 366, FICTION, {.fiction = {"Adventure"}}},
-        {"E.B. White", "Charlotte's Web", "Harper & Brothers", 192, CHILDREN, {.children = {6, "Animal Fiction"}}},
-        {"L. Frank Baum", "The Wonderful Wizard of Oz", "George M. Hill Company", 272, CHILDREN, {.children = {7, "Fantasy"}}},
-        {"Nikola Tesla", "My Inventions", "Electrical Experimenter", 144, TECHNICAL, {.tech = {"Electrical Engineering", "Domestic", 1919}}},
-        {"James Clerk Maxwell", "A Treatise on Electricity and Magnetism", "Clarendon Press", 550, TECHNICAL, {.tech = {"Physics", "Domestic", 1873}}},
-        {"Herman Melville", "Moby-Dick", "Harper & Brothers", 635, FICTION, {.fiction = {"Adventure"}}},
-        {"Franz Kafka", "The Metamorphosis", "Kurt Wolff Verlag", 201, FICTION, {.fiction = {"Absurdist"}}},
-        {"Beatrix Potter", "The Tale of Peter Rabbit", "Frederick Warne & Co.", 72, CHILDREN, {.children = {3, "Animal Fiction"}}},
-        {"Antoine de Saint-Exupéry", "The Little Prince", "Reynal & Hitchcock", 96, CHILDREN, {.children = {6, "Fantasy"}}},
-        {"Sigmund Freud", "The Interpretation of Dreams", "Franz Deuticke", 600, TECHNICAL, {.tech = {"Psychology", "Translated", 1899}}},
-        {"Charles Babbage", "Passages from the Life of a Philosopher", "Longman, Green", 438, TECHNICAL, {.tech = {"Mathematics", "Domestic", 1864}}},
-        {"Ernest Hemingway", "The Old Man and the Sea", "Charles Scribner's Sons", 127, FICTION, {.fiction = {"Adventure"}}},
-        {"Virginia Woolf", "Mrs Dalloway", "Hogarth Press", 296, FICTION, {.fiction = {"Modernist"}}},
-        {"Maurice Sendak", "Where the Wild Things Are", "Harper & Row", 48, CHILDREN, {.children = {4, "Fantasy"}}},
-        {"Lewis Carroll", "Through the Looking-Glass", "Macmillan", 224, CHILDREN, {.children = {8, "Fantasy"}}},
-        {"Thomas Edison", "The Diary of Thomas Edison", "Harper & Brothers", 350, TECHNICAL, {.tech = {"Inventions", "Domestic", 1930}}},
-        {"Gregor Mendel", "Experiments on Plant Hybridization", "Verhandlungen des naturforschenden Vereins", 150, TECHNICAL, {.tech = {"Genetics", "Translated", 1866}}},
-        {"William Shakespeare", "Hamlet", "Oxford University Press", 400, FICTION, {.fiction = {"Tragedy"}}},
-        {"Jules Verne", "Twenty Thousand Leagues Under the Sea", "Pierre-Jules Hetzel", 437, FICTION, {.fiction = {"Science Fiction"}}}};
+        {"Newton", "Principia Mathematica", "Royal Society", 500, TECHNICAL, {.tech = {"Physics", "Translated", 1687}}},
+        {"Turing", "Computing Machinery and Intelligence", "Oxford Press", 150, TECHNICAL, {.tech = {"Computer Science", "Domestic", 1950}}},
+        {"Orwell", "1984", "Secker & Warburg", 328, FICTION, {.fiction = {"Dystopian"}}},
+        {"Tolkien", "The Lord of the Rings", "Allen & Unwin", 1178, FICTION, {.fiction = {"Fantasy"}}},
+        {"Seuss", "The Cat in the Hat", "Random House", 72, CHILDREN, {.children = {4, "Rhyming"}}},
+        {"Carroll", "Alice's Adventures in Wonderland", "Macmillan", 96, CHILDREN, {.children = {7, "Fantasy"}}},
+        {"Einstein", "Relativity: The Special and General Theory", "Henry Holt", 168, TECHNICAL, {.tech = {"Physics", "Translated", 1916}}},
+        {"Curie", "Radioactive Substances", "French Academy of Sciences", 120, TECHNICAL, {.tech = {"Chemistry", "Translated", 1903}}},
+        {"Austen", "Pride and Prejudice", "T. Egerton", 279, FICTION, {.fiction = {"Romance"}}},
+        {"Tolstoy", "War and Peace", "The Russian Messenger", 1225, FICTION, {.fiction = {"Historical"}}},
+        {"Rowling", "Harry Potter and the Philosopher's Stone", "Bloomsbury", 223, CHILDREN, {.children = {9, "Fantasy"}}},
+        {"Milne", "Winnie the Pooh", "Methuen & Co.", 160, CHILDREN, {.children = {5, "Fantasy"}}},
+        {"Hawking", "A Brief History of Time", "Bantam Books", 256, TECHNICAL, {.tech = {"Cosmology", "Domestic", 1988}}},
+        {"Sagan", "Cosmos", "Random House", 365, TECHNICAL, {.tech = {"Astronomy", "Domestic", 1980}}},
+        {"García Márquez", "One Hundred Years of Solitude", "Harper & Row", 417, FICTION, {.fiction = {"Magic Realism"}}},
+        {"Dostoevsky", "Crime and Punishment", "The Russian Messenger", 671, FICTION, {.fiction = {"Psychological"}}},
+        {"Dahl", "Charlie and the Chocolate Factory", "Alfred A. Knopf", 176, CHILDREN, {.children = {8, "Adventure"}}},
+        {"Lewis", "The Chronicles of Narnia: The Lion, the Witch and the Wardrobe", "Geoffrey Bles", 206, CHILDREN, {.children = {9, "Fantasy"}}},
+        {"Darwin", "On the Origin of Species", "John Murray", 502, TECHNICAL, {.tech = {"Biology", "Domestic", 1859}}},
+        {"Feynman", "The Feynman Lectures on Physics", "Addison-Wesley", 1552, TECHNICAL, {.tech = {"Physics", "Domestic", 1964}}},
+        {"Lee", "To Kill a Mockingbird", "J.B. Lippincott & Co.", 281, FICTION, {.fiction = {"Southern Gothic"}}},
+        {"Twain", "The Adventures of Huckleberry Finn", "Chatto & Windus", 366, FICTION, {.fiction = {"Adventure"}}},
+        {"White", "Charlotte's Web", "Harper & Brothers", 192, CHILDREN, {.children = {6, "Animal Fiction"}}},
+        {"Baum", "The Wonderful Wizard of Oz", "George M. Hill Company", 272, CHILDREN, {.children = {7, "Fantasy"}}},
+        {"Tesla", "My Inventions", "Electrical Experimenter", 144, TECHNICAL, {.tech = {"Electrical Engineering", "Domestic", 1919}}},
+        {"Maxwell", "A Treatise on Electricity and Magnetism", "Clarendon Press", 550, TECHNICAL, {.tech = {"Physics", "Domestic", 1873}}},
+        {"Melville", "Moby-Dick", "Harper & Brothers", 635, FICTION, {.fiction = {"Adventure"}}},
+        {"Kafka", "The Metamorphosis", "Kurt Wolff Verlag", 201, FICTION, {.fiction = {"Absurdist"}}},
+        {"Potter", "The Tale of Peter Rabbit", "Frederick Warne & Co.", 72, CHILDREN, {.children = {3, "Animal Fiction"}}},
+        {"Saint-Exupéry", "The Little Prince", "Reynal & Hitchcock", 96, CHILDREN, {.children = {6, "Fantasy"}}},
+        {"Freud", "The Interpretation of Dreams", "Franz Deuticke", 600, TECHNICAL, {.tech = {"Psychology", "Translated", 1899}}},
+        {"Babbage", "Passages from the Life of a Philosopher", "Longman, Green", 438, TECHNICAL, {.tech = {"Mathematics", "Domestic", 1864}}},
+        {"Hemingway", "The Old Man and the Sea", "Charles Scribner's Sons", 127, FICTION, {.fiction = {"Adventure"}}},
+        {"Woolf", "Mrs Dalloway", "Hogarth Press", 296, FICTION, {.fiction = {"Modernist"}}},
+        {"Sendak", "Where the Wild Things Are", "Harper & Row", 48, CHILDREN, {.children = {4, "Fantasy"}}},
+        {"Carroll", "Through the Looking-Glass", "Macmillan", 224, CHILDREN, {.children = {8, "Fantasy"}}},
+        {"Edison", "The Diary of Thomas Edison", "Harper & Brothers", 350, TECHNICAL, {.tech = {"Inventions", "Domestic", 1930}}},
+        {"Mendel", "Experiments on Plant Hybridization", "Verhandlungen des naturforschenden Vereins", 150, TECHNICAL, {.tech = {"Genetics", "Translated", 1866}}},
+        {"Shakespeare", "Hamlet", "Oxford University Press", 400, FICTION, {.fiction = {"Tragedy"}}},
+        {"Verne", "Twenty Thousand Leagues Under the Sea", "Pierre-Jules Hetzel", 437, FICTION, {.fiction = {"Science Fiction"}}}};
 
     int choice;
 
@@ -126,7 +127,8 @@ int main(void)
         printf("4. Просмотреть книги, отсортированные по автору (обычная сортировка)\n");
         printf("5. Измерить производительность сортировок\n");
         printf("6. Просмотреть книги, отсортированные по автору (таблица авторов)\n");
-        printf("7. Выход\n");
+        printf("7. Показать все романы автора\n"); //
+        printf("8. Выход\n");
         printf("Ваш выбор: ");
         scanf("%d", &choice);
         getchar();
@@ -158,6 +160,9 @@ int main(void)
             display_sorted_books_using_author_table(books, book_count);
             break;
         case 7:
+            display_author_fiction_books(books, book_count);
+            break;
+        case 8:
             exit(0);
         default:
             printf("Неверный выбор.\n");
@@ -165,6 +170,31 @@ int main(void)
     }
 
     return 0;
+}
+
+void display_author_fiction_books(Book books[], int book_count)
+{
+    char author[50];
+    printf("Введите фамилию автора: ");
+    fgets(author, 50, stdin);
+    author[strcspn(author, "\n")] = '\0';
+
+    int found = 0;
+    print_table_header();
+
+    for (int i = 0; i < book_count; i++)
+    {
+        if (books[i].type == FICTION && strcmp(books[i].author, author) == 0)
+        {
+            print_book_table_row(&books[i]);
+            found = 1;
+        }
+    }
+
+    if (!found)
+    {
+        printf("Романы автора \"%s\" не найдены.\n", author);
+    }
 }
 
 // Функция добавления книги
