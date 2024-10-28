@@ -49,7 +49,7 @@ int multiply_big_numbers(const char *mantissa, char *big_int, char *result, int 
 
     int len_result = len_mantissa + len_big_int;
 
-    int temp_result[MAX_MANTISSA_DIGITS + MAX_INT_DIGITS] = {0};
+    int temp_result[MAX_INIT_RES_DIGITS] = {0};
 
     for (int i = len_mantissa - 1; i >= 0; i--)
     {
@@ -223,7 +223,7 @@ int input_big_int(char *big_int)
 {
     // для ввода большого целого числа используется строка размером 100 символов
     char input[100];
-    printf("                                1---5---10---15---20---25---30---35---40---45---50\n");
+    printf("                                1---5---10---15---20---25---30---35\n");
     printf("Введите целое число до 30 цифр: ");
 
     if (fgets(input, sizeof(input), stdin) == NULL)
@@ -301,7 +301,7 @@ int main(void)
 
     if (result.mantissa[0] == '\0')
     {
-        printf("Результат: +0.0 E 0\n");
+        printf("Результат: +0.0 E +0\n");
         return ERR_OK;
     }
 
