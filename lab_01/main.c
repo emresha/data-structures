@@ -6,38 +6,26 @@
 #define MAX_MANTISSA_DIGITS 40
 #define MAX_INT_DIGITS 30
 #define MAX_RES_DIGITS 30
+#define MAX_INIT_RES_DIGITS 70
 #define ERR_OK 0
 #define ERR_IO 1
 #define ERR_RANGE 2
 
-// структура для хранения числа с плавающей точкой
-// sign - знак числа
-// mantissa - мантисса числа
-// exponent - показатель степени
 typedef struct
 {
     char sign;
     char mantissa[MAX_MANTISSA_DIGITS + 1];
     int exponent;
-} big_float_t;
+}
+big_float_t;
 
-/* 
-notes:
-1. добавить кратко что делает программа и размеры данных
-2. 
-*/ 
-
-// преобразование мантиссы числа с плавающей точкой в целое число
-// mantissa - мантисса числа
-// int_mantissa - целая часть мантиссы
-// decimal_pos - позиция десятичной точки
+// Функция для преобразования мантиссы в целое число
 void convert_mantissa_to_int(const char *mantissa, char *int_mantissa, int *decimal_pos)
 {
     int len = strlen(mantissa);
     int pos = 0;
     *decimal_pos = 0;
 
-    // убираем десятичную точку
     for (int i = 0; i < len; i++)
     {
         if (mantissa[i] == '.')
@@ -50,11 +38,7 @@ void convert_mantissa_to_int(const char *mantissa, char *int_mantissa, int *deci
     int_mantissa[pos] = '\0';
 }
 
-// умножение мантиссы на целое число
-// mantissa - мантисса числа
-// big_int - целое число
-// result - результат умножения
-// decimal_shift - сдвиг десятичной точки в результате
+// Функция для умножения больших чисел
 int multiply_big_numbers(const char *mantissa, char *big_int, char *result, int *decimal_shift)
 {
     char int_mantissa[MAX_MANTISSA_DIGITS + 1];
@@ -65,31 +49,25 @@ int multiply_big_numbers(const char *mantissa, char *big_int, char *result, int 
 
     int len_result = len_mantissa + len_big_int;
 
-    // результат умножения не может быть больше MAX_MANTISSA_DIGITS
     int temp_result[MAX_MANTISSA_DIGITS + MAX_INT_DIGITS] = {0};
 
-    // умножение столбиком
     for (int i = len_mantissa - 1; i >= 0; i--)
     {
         if (!isdigit(int_mantissa[i]))
             return ERR_IO;
         for (int j = len_big_int - 1; j >= 0; j--)
         {
-            // printf("%c\n", big_int[j]);
             if (!isdigit(big_int[j]))
                 return ERR_IO;
-            // умножение цифр
             int product = (int_mantissa[i] - '0') * (big_int[j] - '0');
             int pos = i + j + 1;
             temp_result[pos] += product;
 
-            // перенос разряда
             temp_result[pos - 1] += temp_result[pos] / 10;
             temp_result[pos] %= 10;
         }
     }
 
-    // приведение результата к строке
     int index = 0;
     int leading_zero = 1;
     for (int i = 0; i < len_result; i++)
@@ -102,7 +80,6 @@ int multiply_big_numbers(const char *mantissa, char *big_int, char *result, int 
         result[index++] = temp_result[i] + '0';
     }
 
-    // если результат равен нулю
     if (index == 0)
     {
         result[0] = '0';
@@ -114,10 +91,7 @@ int multiply_big_numbers(const char *mantissa, char *big_int, char *result, int 
     return ERR_OK;
 }
 
-// умножение числа с плавающей точкой на целое число
-// number - число с плавающей точкой
-// big_int - целое число
-// result - результат умножения
+// Функция для умножения большого числа с плавающей запятой на целое число
 int multiply(big_float_t *number, char *big_int, big_float_t *result)
 {
     if (strlen(big_int) > MAX_INT_DIGITS)
@@ -138,22 +112,19 @@ int multiply(big_float_t *number, char *big_int, big_float_t *result)
         }
     }
 
-    char mult_result[MAX_MANTISSA_DIGITS + MAX_INT_DIGITS + 1];
+    char mult_result[MAX_INIT_RES_DIGITS + 1];
     int decimal_shift;
 
     int ret = multiply_big_numbers(number->mantissa, big_int, mult_result, &decimal_shift);
     if (ret != ERR_OK)
-    {
         return ret;
-    }
 
     result->exponent = number->exponent - decimal_shift;
-
 
     int result_len = strlen(mult_result);
     if (result_len > MAX_RES_DIGITS)
     {
-        result->exponent += strlen(mult_result) - MAX_RES_DIGITS;
+        result->exponent += strlen(mult_result);
         if (mult_result[MAX_RES_DIGITS] >= '5')
         {
             int carry = 1;
@@ -178,12 +149,12 @@ int multiply(big_float_t *number, char *big_int, big_float_t *result)
         mult_result[MAX_RES_DIGITS] = '\0';
     }
 
-
     strcpy(result->mantissa, mult_result);
 
     return ERR_OK;
 }
 
+// Функция для проверки строки на наличие только цифр
 int check_str(char *str)
 {
     int rc = ERR_OK;
@@ -197,9 +168,7 @@ int check_str(char *str)
     return rc;
 }
 
-// ввод числа с плавающей точкой
-// number - число с плавающей точкой
-// ввод числа с плавающей точкой
+// Функция для ввода большого числа с плавающей запятой
 int input_big_float(big_float_t *number)
 {
     char input[100];
@@ -249,9 +218,10 @@ int input_big_float(big_float_t *number)
     return ERR_OK;
 }
 
-// ввод целого числа
+// Функция для ввода большого целого числа
 int input_big_int(char *big_int)
 {
+    // для ввода большого целого числа используется строка размером 100 символов
     char input[100];
     printf("                                1---5---10---15---20---25---30---35---40---45---50\n");
     printf("Введите целое число до 30 цифр: ");
@@ -274,9 +244,7 @@ int input_big_int(char *big_int)
     return ERR_OK;
 }
 
-
-// удаление нулей в конце числа и перенос их в показатель степени
-// result - результат умножения
+// Функция для удаления нулей из мантиссы
 void delete_zeros(big_float_t *result)
 {
     int len = strlen(result->mantissa);
@@ -299,30 +267,36 @@ int main(void)
 
     printf("Программа выполнения умножения вещественного и целого числа,\nвыходящего за разрядную сетку компьютера\n");
 
-    // ввод числа с плавающей точкой и целого числа
     int ret = input_big_float(&number);
     if (ret != ERR_OK)
     {
-        printf("Ошибка ввода числа. Код ошибки: %d\n", ret);
+        if (ret == ERR_IO)
+            printf("Ошибка ввода числа: неверный формат или недопустимые символы.\n");
+        else if (ret == ERR_RANGE)
+            printf("Ошибка ввода числа: превышена допустимая длина мантиссы или экспоненты.\n");
         return ret;
     }
 
-    // ввод целого числа
     ret = input_big_int(big_int);
     if (ret != ERR_OK)
     {
-        printf("Ошибка ввода целого числа. Код ошибки: %d\n", ret);
+        if (ret == ERR_IO)
+            printf("Ошибка ввода целого числа: неверный формат или недопустимые символы.\n");
+        else if (ret == ERR_RANGE)
+            printf("Ошибка ввода целого числа: превышена допустимая длина.\n");
         return ret;
     }
 
-    // умножение числа с плавающей точкой на целое число
     ret = multiply(&number, big_int, &result);
     if (ret != ERR_OK)
     {
+        if (ret == ERR_IO)
+            printf("Ошибка умножения: неверный формат мантиссы или целого числа.\n");
+        else if (ret == ERR_RANGE)
+            printf("Ошибка умножения: результат превышает допустимую длину.\n");
         return ret;
     }
 
-    // удаление нулей в конце числа и перенос их в показатель степени
     delete_zeros(&result);
 
     if (result.mantissa[0] == '\0')
@@ -333,9 +307,11 @@ int main(void)
 
     int add_exp;
 
-    if (abs(result.exponent) > 99999)
+    // printf("%d\n", result.exponent);
+
+    if (result.exponent >= 99999 || result.exponent < -100000)
     {
-        printf("Ошибка умножения. Код ошибки: %d\n", ERR_RANGE);
+        printf("Ошибка умножения: экспонента превышает допустимый диапазон.\n");
         return ERR_RANGE;
     }
 
@@ -347,8 +323,6 @@ int main(void)
     {
         add_exp = -1;
     }
-
-    // printf("\'%s\', %d %d %zu\n", result.mantissa, result.exponent, add_exp, strlen(result.mantissa));
 
     char exp_sign = (result.exponent < 0) ? '\0' : '+';
 
