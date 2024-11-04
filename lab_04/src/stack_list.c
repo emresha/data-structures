@@ -1,8 +1,8 @@
-
 #include "stack_list.h"
 #include <stdio.h>
 #include <stdlib.h>
 
+// свобождение памяти, занятой стеком
 void free_stack_list(StackList *stack)
 {
     Node *current = stack->top;
@@ -16,21 +16,25 @@ void free_stack_list(StackList *stack)
     stack->top = NULL;
 }
 
+// инициализация стека
 void init_stack_list(StackList *stack)
 {
     stack->top = NULL;
 }
 
+// инициализация списка свободных областей
 void init_free_list(FreeList *free_list)
 {
     free_list->count = 0;
 }
 
+// проверка, пуст ли стек
 int is_empty_list(StackList *stack)
 {
     return stack->top == NULL;
 }
 
+// дбавление элемента в стек
 void push_list(StackList *stack, char value)
 {
     Node *new_node = (Node *)malloc(sizeof(Node));
@@ -42,6 +46,7 @@ void push_list(StackList *stack, char value)
     }
 }
 
+// извлечение элемента из стека
 char pop_list(StackList *stack, FreeList *free_list)
 {
     if (is_empty_list(stack))
@@ -59,6 +64,7 @@ char pop_list(StackList *stack, FreeList *free_list)
     return value;
 }
 
+// печать содержимого стека
 void print_stack_list(StackList *stack)
 {
     if (is_empty_list(stack))
@@ -76,6 +82,7 @@ void print_stack_list(StackList *stack)
     printf("\n");
 }
 
+// печать списка свободных областей
 void print_free_list(FreeList *free_list)
 {
     if (free_list->count == 0)
@@ -90,75 +97,86 @@ void print_free_list(FreeList *free_list)
     }
 }
 
+// проверка того, является ли стек палиндромом
 int is_palindrome_list(StackList *stack, FreeList *free_list)
 {
-    int size = 0;
+    int stack_size = 0;
     char element;
-    StackList temp_fill_checking, temp_fill_reserve;
-    FreeList temp_free_checking, temp_free_reserve;
+    StackList temp_stack_check, temp_stack_restore;
+    FreeList temp_free_check, temp_free_restore;
 
-    init_stack_list(&temp_fill_checking);
-    init_stack_list(&temp_fill_reserve);
-    init_free_list(&temp_free_checking);
-    init_free_list(&temp_free_reserve);
+    // инициализация временных стеков и списков
+    init_stack_list(&temp_stack_check);
+    init_stack_list(&temp_stack_restore);
+    init_free_list(&temp_free_check);
+    init_free_list(&temp_free_restore);
 
+    // перенос элементов из исходного стека во временный стек для проверки
     while (!is_empty_list(stack))
     {
-        size++;
-        push_list(&temp_fill_checking, pop_list(stack, free_list));
+        stack_size++;
+        push_list(&temp_stack_check, pop_list(stack, free_list));
     }
 
-    while (!is_empty_list(&temp_fill_checking))
+    // восстановление исходного стека
+    while (!is_empty_list(&temp_stack_check))
     {
-        push_list(stack, pop_list(&temp_fill_checking, &temp_free_checking));
+        push_list(stack, pop_list(&temp_stack_check, &temp_free_check));
     }
 
+    // перенос элементов из исходного стека в два временных стека
     while (!is_empty_list(stack))
     {
         element = pop_list(stack, free_list);
-        push_list(&temp_fill_checking, element);
-        push_list(&temp_fill_reserve, element);
+        push_list(&temp_stack_check, element);
+        push_list(&temp_stack_restore, element);
     }
 
-    while (!is_empty_list(&temp_fill_checking))
+    // Восстановление исходного стека
+    while (!is_empty_list(&temp_stack_check))
     {
-        push_list(stack, pop_list(&temp_fill_checking, &temp_free_checking));
+        push_list(stack, pop_list(&temp_stack_check, &temp_free_check));
     }
 
-    for (size_t i = 0; i < (size / 2); i++)
+    // перенос половины элементов из исходного стека во временный стек для проверки
+    for (size_t i = 0; i < (stack_size / 2); i++)
     {
-        push_list(&temp_fill_checking, pop_list(stack, free_list));
+        push_list(&temp_stack_check, pop_list(stack, free_list));
     }
 
-    if (size % 2 != 0)
+    // если размер стека нечетный, пропускаем средний элемент
+    if (stack_size % 2 != 0)
     {
         pop_list(stack, free_list);
     }
 
-    while (!is_empty_list(&temp_fill_checking) || !is_empty_list(stack))
+    // сравнение элементов из двух временных стеков
+    while (!is_empty_list(&temp_stack_check) || !is_empty_list(stack))
     {
-        if (pop_list(&temp_fill_checking, &temp_free_checking) != pop_list(stack, free_list))
+        if (pop_list(&temp_stack_check, &temp_free_check) != pop_list(stack, free_list))
         {
+            // ели элементы не совпадают, восстанавливаем исходный стек и возвращаем 0
             while (!is_empty_list(stack))
             {
                 pop_list(stack, free_list);
             }
-            for (size_t i = 0; i < size; i++)
+            for (size_t i = 0; i < stack_size; i++)
             {
-                push_list(stack, pop_list(&temp_fill_reserve, &temp_free_reserve));
+                push_list(stack, pop_list(&temp_stack_restore, &temp_free_restore));
             }
-            free_stack_list(&temp_fill_checking);
-            free_stack_list(&temp_fill_reserve);
+            free_stack_list(&temp_stack_check);
+            free_stack_list(&temp_stack_restore);
             return 0;
         }
     }
 
-    for (size_t i = 0; i < size; i++)
+    // восстановление исходного стека
+    for (size_t i = 0; i < stack_size; i++)
     {
-        push_list(stack, pop_list(&temp_fill_reserve, &temp_free_reserve));
+        push_list(stack, pop_list(&temp_stack_restore, &temp_free_restore));
     }
-    free_stack_list(&temp_fill_checking);
-    free_stack_list(&temp_fill_reserve);
+    free_stack_list(&temp_stack_check);
+    free_stack_list(&temp_stack_restore);
 
     return 1;
 }

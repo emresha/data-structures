@@ -19,93 +19,65 @@ int is_full_array(StackArray *stack)
 void push_array(StackArray *stack, char value)
 {
     if (!is_full_array(stack)) 
-    {
         stack->data[++stack->top] = value;
-    }
     else
-    {
-        printf("Стек переполнен!\n");
-        printf("Удалите элемент для продолжения!\n");
-    }
+        printf("Переполнение стека.\n");
 }
 
 char pop_array(StackArray *stack)
 {
     if (!is_empty_array(stack)) 
-    {
         return stack->data[stack->top--];
-    }
-    return '\0';
+    
+    return 0;
 }
 
 void print_stack_array(StackArray *stack)
 {
     if (is_empty_array(stack)) 
+        printf("Стек пустой.\n");
+    else
     {
-        printf("Стек пуст\n");
-        return;
+        printf("Текущий стек (массив)\n");
+        for (int i = stack->top; i >= 0; i--) 
+            printf("| %c |\n", stack->data[i]);
     }
-    printf("Текущий стек (массив)\n");
-    for (int i = stack->top; i >= 0; i--) 
-    {
-        printf("| %c |\n", stack->data[i]);
-    }
+
     printf("\n");
 }
 
 int is_palindrome_array(StackArray *stack) 
 {
-    char element;
-
-    StackArray temp_fill_checking, temp_fill_reserve;
-
-    init_stack_array(&temp_fill_checking);
-    init_stack_array(&temp_fill_reserve);
+    StackArray temp_stack;
+    init_stack_array(&temp_stack);
 
     int size = stack->top + 1;
+    int mid = size / 2;
+    int is_palindrome = 1;
 
-    while (!is_empty_array(stack))
+    for (int i = 0; i < mid; i++) 
     {
-        element = pop_array(stack);
-        push_array(&temp_fill_checking, element);
-        push_array(&temp_fill_reserve, element);
+        push_array(&temp_stack, pop_array(stack));
     }
 
-    while (!is_empty_array(&temp_fill_checking))
-    {
-        push_array(stack, pop_array(&temp_fill_checking));
-    }
-
-    for (size_t i = 0; i < (size / 2); i++)
-    {
-        push_array(&temp_fill_checking, pop_array(stack));
-    }
-
-    if (size % 2 != 0)
+    if (size % 2 != 0) 
     {
         pop_array(stack);
     }
 
-    while (!is_empty_array(&temp_fill_checking) || !is_empty_array(stack))
+    while (!is_empty_array(&temp_stack)) 
     {
-        if (pop_array(&temp_fill_checking) != pop_array(stack))
+        if (pop_array(&temp_stack) != pop_array(stack)) 
         {
-            while (!is_empty_array(stack))
-            {
-                pop_array(stack);
-            }
-            for (size_t i = 0; i < size; i++)
-            {
-                push_array(stack, pop_array(&temp_fill_reserve));
-            }
-            return 0;
+            is_palindrome = 0;
+            break;
         }
     }
 
-    for (size_t i = 0; i < size; i++)
+    for (int i = 0; i < mid; i++) 
     {
-        push_array(stack, pop_array(&temp_fill_reserve));
+        push_array(stack, pop_array(&temp_stack));
     }
 
-    return 1;
+    return is_palindrome;
 }

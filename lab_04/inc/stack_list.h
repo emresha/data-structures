@@ -1,7 +1,7 @@
 #ifndef STACK_LIST_H__
 #define STACK_LIST_H__
 
-#include "constants.h"
+#define STACK_SIZE 1000
 
 typedef struct Node
 {
