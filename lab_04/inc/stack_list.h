@@ -1,24 +1,27 @@
 #ifndef STACK_LIST_H__
 #define STACK_LIST_H__
 
-#define STACK_SIZE 1000
+#define MAX_SIZE 1000
 
 typedef struct Node
 {
-    char data;
+    char symbol;
     struct Node *next;
-} Node;
+}
+Node;
 
 typedef struct
 {
     Node *top;
-} StackList;
+}
+StackList;
 
 typedef struct
 {
-    Node *addresses[STACK_SIZE];
+    Node *pointers[MAX_SIZE];
     int count;
-} FreeList;
+}
+FreeList;
 
 void free_stack_list(StackList *stack);
 

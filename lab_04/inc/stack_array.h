@@ -1,13 +1,14 @@
 #ifndef STACK_ARRAY_H__
 #define STACK_ARRAY_H__
 
-#define STACK_SIZE 1000
+#define MAX_SIZE 1000
 
 typedef struct
 {
-    char data[STACK_SIZE];
+    char str[MAX_SIZE];
     int top;
-} StackArray;
+}
+StackArray;
 
 void init_stack_array(StackArray *stack);
 

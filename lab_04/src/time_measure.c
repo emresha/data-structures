@@ -41,7 +41,7 @@ static void benchmark_stack_array(size_t sizes[], size_t count)
         "Проверка на палиндром (не является)"};
 
     printf("\n%s\n", texts[0]);
-    printf("|Количество символов           |Время в тиках  |Объем стека (в байтах)|\n");
+    printf("|Количество элементов          |Время в тиках  |Объем стека (в байтах)|\n");
     for (size_t i = 0; i < count; i++)
     {
         size_t size = sizes[i];
@@ -62,7 +62,7 @@ static void benchmark_stack_array(size_t sizes[], size_t count)
     }
 
     printf("\n%s\n", texts[1]);
-    printf("|Количество символов           |Время в тиках  |Объем стека (в байтах)|\n");
+    printf("|Количество элементов          |Время в тиках  |Объем стека (в байтах)|\n");
     for (size_t i = 0; i < count; i++)
     {
         size_t size = sizes[i];
@@ -82,7 +82,7 @@ static void benchmark_stack_array(size_t sizes[], size_t count)
     }
 
     printf("\n%s\n", texts[2]);
-    printf("|Количество символов           |Время в тиках  |Объем стека (в байтах)|\n");
+    printf("|Количество элементов          |Время в тиках  |Объем стека (в байтах)|\n");
     for (size_t i = 0; i < count; i++)
     {
         size_t size = sizes[i];
@@ -105,7 +105,7 @@ static void benchmark_stack_array(size_t sizes[], size_t count)
     }
 
     printf("\n%s\n", texts[3]);
-    printf("|Количество символов           |Время в тиках  |Объем стека (в байтах)|\n");
+    printf("|Количество элементов          |Время в тиках  |Объем стека (в байтах)|\n");
 
     for (size_t i = 0; i < count; i++)
     {
@@ -139,7 +139,7 @@ static void benchmark_stack_list(size_t sizes[], size_t count)
 
     printf("***Операции со стеком, реализованном в виде списка***\n");
     printf("\n%s\n", texts[0]);
-    printf("|Количество символов           |Время в тиках  |Объем стека (в байтах)|\n");
+    printf("|Количество элементов          |Время в тиках  |Объем стека (в байтах)|\n");
     for (size_t i = 0; i < count; i++)
     {
         size_t size = sizes[i];
@@ -161,7 +161,7 @@ static void benchmark_stack_list(size_t sizes[], size_t count)
     }
 
     printf("\n%s\n", texts[1]);
-    printf("|Количество символов           |Время в тиках  |Объем стека (в байтах)|\n");
+    printf("|Количество элементов          |Время в тиках  |Объем стека (в байтах)|\n");
     for (size_t i = 0; i < count; i++)
     {
         size_t size = sizes[i];
@@ -185,7 +185,7 @@ static void benchmark_stack_list(size_t sizes[], size_t count)
     }
 
     printf("\n%s\n", texts[2]);
-    printf("|Количество символов           |Время в тиках  |Объем стека (в байтах)|\n");
+    printf("|Количество элементов          |Время в тиках  |Объем стека (в байтах)|\n");
     for (size_t i = 0; i < count; i++)
     {
         size_t size = sizes[i];
@@ -213,7 +213,7 @@ static void benchmark_stack_list(size_t sizes[], size_t count)
     }
 
     printf("\n%s\n", texts[3]);
-    printf("|Количество символов           |Время в тиках  |Объем стека (в байтах)|\n");
+    printf("|Количество элементов          |Время в тиках  |Объем стека (в байтах)|\n");
 
     for (size_t i = 0; i < count; i++)
     {

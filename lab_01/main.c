@@ -121,25 +121,36 @@ int multiply(big_float_t *number, char *big_int, big_float_t *result)
 
     result->exponent = number->exponent - decimal_shift;
 
+    // округление
     int result_len = strlen(mult_result);
     if (result_len > MAX_RES_DIGITS)
     {
-        result->exponent += strlen(mult_result);
-        if (mult_result[MAX_RES_DIGITS] >= '5')
+        char rounding_digit = mult_result[MAX_RES_DIGITS - 2];
+        // printf("ROUNDING DIGIT IS %c\n", rounding_digit);
+        mult_result[MAX_RES_DIGITS] = '\0';
+
+        // printf("MULT RESULT IS: \'%s\'\n", mult_result);
+
+        if (rounding_digit >= '5')
         {
             int carry = 1;
-            for (int i = MAX_RES_DIGITS - 1; i >= 0 && carry; i--)
+            for (int i = MAX_RES_DIGITS - 2; i >= 0 && carry; i--)
             {
-                if (mult_result[i] < '9') {
+                if (mult_result[i] < '9')
+                {
+                    // printf("ABOUT TO LOSE CARRY AT %d WITH VALUE %c\n", i, mult_result[i]);
                     mult_result[i]++;
+                    // printf("LOST CARRY AT %d\n", i);
                     carry = 0;
-                } else {
+                }
+                else
+                {
                     mult_result[i] = '0';
                 }
             }
-
             if (carry)
             {
+                // printf("HREE\n");
                 memmove(&mult_result[1], mult_result, MAX_RES_DIGITS);
                 mult_result[0] = '1';
                 result->exponent++;
@@ -147,10 +158,14 @@ int multiply(big_float_t *number, char *big_int, big_float_t *result)
         }
 
         mult_result[MAX_RES_DIGITS] = '\0';
+        result->exponent += (result_len - MAX_RES_DIGITS);
+    }
+    else
+    {
+        result->exponent += (result_len - strlen(mult_result));
     }
 
     strcpy(result->mantissa, mult_result);
-
     return ERR_OK;
 }
 

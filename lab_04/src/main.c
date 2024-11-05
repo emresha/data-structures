@@ -29,12 +29,12 @@ int input_single_character(char *value)
 
 void print_array_menu(void)
 {
-    printf("Выберите реализацию стека:\n");
-    printf("1. Статический массив\n");
-    printf("2. Список\n");
-    printf("3. Замерить время\n");
-    printf("0. Выход\n");
-    printf("Введите ваш выбор: ");
+    printf("Выберите функцию или способ реализации стека:\n");
+    printf("1. С помощью статического массива\n");
+    printf("2. С помощью односвязного списка\n");
+    printf("3. Выполнить замерный эксперимент\n");
+    printf("0. Выйти\n");
+    printf("Ввод: ");
 }
 
 int main(void)
@@ -49,10 +49,10 @@ int main(void)
 
     print_array_menu();
 
-    while (scanf("%d", &choice) != 1 || (choice != 1 && choice != 2 && choice != 3 && choice != 0))
+    while (scanf("%d", &choice) != 1 || choice < 0 || choice > 3)
     {
         clean_stdin();
-        printf("Некорректный выбор\n");
+        printf("Некорректный ввод.\n");
         print_array_menu();
     }
 
@@ -78,19 +78,19 @@ int main(void)
 
     while (sub_choice != 0)
     {
-        printf("\nВыберите операцию:\n");
-        printf("1. Добавить элемент\n");
-        printf("2. Удалить элемент\n");
-        printf("3. Вывести текущее состояние стека\n");
-        printf("4. Проверить текущий стек на палиндром\n");
+        printf("\nВыберите действие:\n");
+        printf("1. Добавить элемент в стек\n");
+        printf("2. Удалить элемент из стека\n");
+        printf("3. Вывести стек\n");
+        printf("4. Проверить текущую строку в стеке на палиндромю\n");
 
         if (choice == 2)
         {
-            printf("5. Показать список освобожденных областей\n");
+            printf("5. Показать список свободных узлов.\n");
         }
 
-        printf("0. Выход\n");
-        printf("Введите ваш выбор: ");
+        printf("0. Выйти\n");
+        printf("Ввод: ");
 
         if (scanf("%d", &sub_choice) != 1)
         {
@@ -105,7 +105,7 @@ int main(void)
             clean_stdin();
             while (input_single_character(&value) != 0)
             {
-                printf("Неверный ввод!\n");
+                printf("Неверный ввод.\n");
             }
             if (choice == 1)
             {
@@ -152,34 +152,34 @@ int main(void)
             {
                 if (is_empty_array(&stack_array))
                 {
-                    printf("Стек пуст\n");
+                    printf("Стек пуст.\n");
                     break;
                 }
 
                 if (is_palindrome_array(&stack_array))
                 {
-                    printf("Стек является палиндромом\n");
+                    printf("Стек является палиндромом.\n");
                 }
                 else
                 {
-                    printf("Стек не является палиндромом\n");
+                    printf("Стек не является палиндромом.\n");
                 }
             }
             else
             {
                 if (is_empty_list(&stack_list))
                 {
-                    printf("Стек пуст\n");
+                    printf("Стек пуст.\n");
                     break;
                 }
 
                 if (is_palindrome_list(&stack_list, &free_list))
                 {
-                    printf("Стек является палиндромом\n");
+                    printf("Стек является палиндромом.\n");
                 }
                 else
                 {
-                    printf("Стек не является палиндромом\n");
+                    printf("Стек не является палиндромом.\n");
                 }
             }
             break;
@@ -191,7 +191,7 @@ int main(void)
             }
             else
             {
-                printf("Некорректная операция\n");
+                printf("Некорректное действие.\n");
             }
             break;
 
@@ -203,7 +203,7 @@ int main(void)
             break;
 
         default:
-            printf("Некорректная операция\n");
+            printf("Некорректное действие.\n");
             break;
         }
     }
