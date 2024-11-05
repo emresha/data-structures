@@ -1,5 +1,6 @@
 #include "stack_array.h"
 #include "stack_list.h"
+#include <string.h>
 #include "time_measure.h"
 #include <stdio.h>
 
@@ -16,19 +17,23 @@ void clean_input(void)
 int input_single_character(char *value)
 {
     printf("Введите элемент для добавления: ");
-    char buffer[2];
+    char buf[3];
 
-    scanf("%s", buffer);
+    fgets(buf, 3, stdin);
+    sscanf("%s", buf);
 
-    if (buffer[1] != '\0')
+    // printf("\'%s\'\n", buffer);
+
+    if (!strchr(buf, '\n'))
     {
         return 1;
     }
-    *value = buffer[0];
+    
+    *value = buf[0];
     return 0;
 }
 
-void print_array_menu(void)
+void print_menu(void)
 {
     printf("Выберите функцию или способ реализации стека:\n");
     printf("1. С помощью статического массива\n");
@@ -48,13 +53,14 @@ int main(void)
 
     printf("Данная программа создана для работы со стеком и проверки строки, находящейся в нём на то, является ли она палиндромом.\nВ стек строку можно добавлять только посимвольно.\nМаксимальный размер стека, реализованного с помощью статического массива -- тысяча элементов.\n\n");
 
-    print_array_menu();
+    print_menu();
 
     while (scanf("%d", &choice) != 1 || choice < 0 || choice > 3)
     {
         clean_input();
         printf("Некорректный ввод.\n");
-        print_array_menu();
+        clean_input();
+        print_menu();
     }
 
     if (choice == 1)
@@ -107,6 +113,8 @@ int main(void)
             while (input_single_character(&value) != 0)
             {
                 printf("Неверный ввод.\n");
+                value = 0;
+                clean_input();
             }
             if (choice == 1)
             {
@@ -193,6 +201,7 @@ int main(void)
             else
             {
                 printf("Некорректное действие.\n");
+                clean_input();
             }
             break;
 
@@ -205,6 +214,7 @@ int main(void)
 
         default:
             printf("Некорректное действие.\n");
+            clean_input();
             break;
         }
     }
