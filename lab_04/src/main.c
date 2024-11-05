@@ -3,13 +3,14 @@
 #include "time_measure.h"
 #include <stdio.h>
 
-void clean_stdin(void)
+void clean_input(void)
 {
     int c;
     do
     {
         c = getchar();
-    } while (c != '\n' && c != EOF);
+    }
+    while (c != '\n' && c != EOF);
 }
 
 int input_single_character(char *value)
@@ -51,7 +52,7 @@ int main(void)
 
     while (scanf("%d", &choice) != 1 || choice < 0 || choice > 3)
     {
-        clean_stdin();
+        clean_input();
         printf("Некорректный ввод.\n");
         print_array_menu();
     }
@@ -94,7 +95,7 @@ int main(void)
 
         if (scanf("%d", &sub_choice) != 1)
         {
-            clean_stdin();
+            clean_input();
             sub_choice = -1;
         }
         printf("\n");
@@ -102,7 +103,7 @@ int main(void)
         switch (sub_choice)
         {
         case 1:
-            clean_stdin();
+            clean_input();
             while (input_single_character(&value) != 0)
             {
                 printf("Неверный ввод.\n");
