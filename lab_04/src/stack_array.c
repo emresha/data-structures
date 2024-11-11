@@ -1,24 +1,24 @@
 #include "stack_array.h"
 #include <stdio.h>
 
-void init_stack_array(StackArray *stack) 
+void init_stack_array(StackArray *stack)
 {
     stack->top = -1;
 }
 
-int is_empty_array(StackArray *stack) 
+int is_empty_array(StackArray *stack)
 {
     return stack->top == -1;
 }
 
-int is_full_array(StackArray *stack) 
+int is_full_array(StackArray *stack)
 {
     return stack->top == MAX_SIZE - 1;
 }
 
 void push_array(StackArray *stack, char value)
 {
-    if (!is_full_array(stack)) 
+    if (!is_full_array(stack))
         stack->str[++stack->top] = value;
     else
         printf("Переполнение стека.\n");
@@ -26,59 +26,61 @@ void push_array(StackArray *stack, char value)
 
 char pop_array(StackArray *stack)
 {
-    if (!is_empty_array(stack)) 
+    if (!is_empty_array(stack))
         return stack->str[stack->top--];
-    
+
     return 0;
 }
 
 void print_stack_array(StackArray *stack)
 {
-    if (is_empty_array(stack)) 
+    if (is_empty_array(stack))
         printf("Стек пустой.\n");
     else
     {
         printf("Текущий стек\n");
-        for (int i = stack->top; i >= 0; i--) 
-            printf("\'%c\'\n", stack->str[i]);
+        for (int i = stack->top; i >= 0; i--)
+            printf("\'%d\'\n", stack->str[i]);
     }
 
     printf("\n");
 }
 
-int is_palindrome_array(StackArray *stack) 
+void sort_stacks(StackArray *stack1, StackArray *stack2, StackArray *sorted_stack)
 {
-    StackArray temp_stack, copy_stack;
+    init_stack_array(sorted_stack);
+
+    // Step 1: Merge stack1 and stack2 into sorted_stack
+    while (!is_empty_array(stack1))
+    {
+        push_array(sorted_stack, pop_array(stack1));
+    }
+    while (!is_empty_array(stack2))
+    {
+        push_array(sorted_stack, pop_array(stack2));
+    }
+
+    // Step 2: Sort using temp_stack
+    StackArray temp_stack;
     init_stack_array(&temp_stack);
-    init_stack_array(&copy_stack);
 
-    int size = stack->top + 1;
-    int mid = size / 2;
-    int is_palindrome = 1;
-
-    for (int i = 0; i <= stack->top; i++) 
+    while (!is_empty_array(sorted_stack))
     {
-        push_array(&copy_stack, stack->str[i]);
-    }
+        int temp = pop_array(sorted_stack);
 
-    for (int i = 0; i < mid; i++) 
-    {
-        push_array(&temp_stack, pop_array(&copy_stack));
-    }
-
-    if (size % 2 != 0) 
-    {
-        pop_array(&copy_stack);
-    }
-
-    while (!is_empty_array(&temp_stack)) 
-    {
-        if (pop_array(&temp_stack) != pop_array(&copy_stack)) 
+        // Move elements from temp_stack to sorted_stack if they are greater than temp
+        while (!is_empty_array(&temp_stack) && temp_stack.str[temp_stack.top] > temp)
         {
-            is_palindrome = 0;
-            break;
+            push_array(sorted_stack, pop_array(&temp_stack));
         }
+
+        // Push temp into its correct position in temp_stack
+        push_array(&temp_stack, temp);
     }
 
-    return is_palindrome;
+    // Step 3: Move sorted elements back to sorted_stack (in ascending order)
+    while (!is_empty_array(&temp_stack))
+    {
+        push_array(sorted_stack, pop_array(&temp_stack));
+    }
 }

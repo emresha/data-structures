@@ -1,11 +1,11 @@
 #ifndef STACK_ARRAY_H__
 #define STACK_ARRAY_H__
 
-#define MAX_SIZE 1000
+#define MAX_SIZE 10000
 
 typedef struct
 {
-    char str[MAX_SIZE];
+    int str[MAX_SIZE];
     int top;
 }
 StackArray;
@@ -18,10 +18,10 @@ int is_full_array(StackArray *stack);
 
 void push_array(StackArray *stack, char value);
 
-char pop_array(StackArray *stack);
-
 void print_stack_array(StackArray *stack);
 
-int is_palindrome_array(StackArray *stack);
+char pop_array(StackArray *stack);
+
+void sort_stacks(StackArray *stack1, StackArray *stack2, StackArray *sorted_stack);
 
 #endif

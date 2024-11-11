@@ -1,11 +1,11 @@
 #ifndef STACK_LIST_H__
 #define STACK_LIST_H__
 
-#define MAX_SIZE 1000
+#define MAX_SIZE 10000
 
 typedef struct Node
 {
-    char symbol;
+    int symbol;
     struct Node *next;
 }
 Node;
@@ -37,7 +37,7 @@ void print_stack_list(StackList *stack);
 
 void print_free_list(FreeList *free_list);
 
-int is_palindrome_list(StackList *stack, FreeList *free_list);
+void sort_stack_list(StackList *stack1, StackList *stack2, StackList *sorted_stack, FreeList *free_list);
 
 int is_empty_list(StackList *stack);
 

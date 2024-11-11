@@ -16,6 +16,14 @@ void free_stack_list(StackList *stack)
     stack->top = NULL;
 }
 
+int peek_list(StackList *stack)
+{
+    if (is_empty_list(stack))
+        return 0;
+
+    return stack->top->symbol;
+}
+
 // инициализация стека
 void init_stack_list(StackList *stack)
 {
@@ -51,7 +59,7 @@ char pop_list(StackList *stack, FreeList *free_list)
 {
     if (is_empty_list(stack))
         return '\0';
-    
+
     Node *temp = stack->top;
     char value = temp->symbol;
     stack->top = stack->top->next;
@@ -76,7 +84,7 @@ void print_stack_list(StackList *stack)
     Node *current = stack->top;
     while (current)
     {
-        printf("\'%c\': %p\n", current->symbol, (void *)current);
+        printf("\'%d\': %p\n", current->symbol, (void *)current);
         current = current->next;
     }
     printf("\n");
@@ -97,67 +105,40 @@ void print_free_list(FreeList *free_list)
     }
 }
 
-int is_palindrome_list(StackList *stack, FreeList *free_list) 
+void sort_stack_list(StackList *stack1, StackList *stack2, StackList *sorted_stack, FreeList *free_list)
 {
-    int size = 0;
-    char element;
-    StackList temp_fill_checking, temp_fill_reserve;
-    FreeList temp_free_checking, temp_free_reserve;
+    StackList temp_stack;
+    FreeList temp_free_list;
 
-    init_stack_list(&temp_fill_checking);
-    init_stack_list(&temp_fill_reserve);
-    init_free_list(&temp_free_checking);
-    init_free_list(&temp_free_reserve);
+    init_stack_list(sorted_stack);
+    init_stack_list(&temp_stack);
+    init_free_list(&temp_free_list);
 
-    while (!is_empty_list(stack))
+    while (!is_empty_list(stack1))
     {
-        size++;
-        push_list(&temp_fill_checking, pop_list(stack, free_list));
+        push_list(sorted_stack, pop_list(stack1, free_list));
+    }
+    while (!is_empty_list(stack2))
+    {
+        push_list(sorted_stack, pop_list(stack2, free_list));
     }
 
-    while (!is_empty_list(&temp_fill_checking))
-        push_list(stack, pop_list(&temp_fill_checking, &temp_free_checking));
-
-    while (!is_empty_list(stack))
+    while (!is_empty_list(sorted_stack))
     {
-        element = pop_list(stack, free_list);
-        push_list(&temp_fill_checking, element);
-        push_list(&temp_fill_reserve, element);
-    }
+        int temp = pop_list(sorted_stack, free_list);
 
-    while (!is_empty_list(&temp_fill_checking))
-        push_list(stack, pop_list(&temp_fill_checking, &temp_free_checking));
-
-    for (size_t i = 0; i < (size / 2); i++)
-        push_list(&temp_fill_checking, pop_list(stack, free_list));
-
-    if (size % 2 != 0)
-        pop_list(stack, free_list);
-
-    while (!is_empty_list(&temp_fill_checking) || !is_empty_list(stack))
-    {
-        if (pop_list(&temp_fill_checking, &temp_free_checking) != pop_list(stack, free_list))
+        while (!is_empty_list(&temp_stack) && peek_list(&temp_stack) > temp)
         {
-            while (!is_empty_list(stack))
-            {
-                pop_list(stack, free_list);
-            }
-            for (size_t i = 0; i < size; i++)
-            {
-                push_list(stack, pop_list(&temp_fill_reserve, &temp_free_reserve));
-            }
-            free_stack_list(&temp_fill_checking);
-            free_stack_list(&temp_fill_reserve);
-            return 0;
+            push_list(sorted_stack, pop_list(&temp_stack, &temp_free_list));
         }
+
+        push_list(&temp_stack, temp);
     }
 
-    for (size_t i = 0; i < size; i++)
+    while (!is_empty_list(&temp_stack))
     {
-        push_list(stack, pop_list(&temp_fill_reserve, &temp_free_reserve));
+        push_list(sorted_stack, pop_list(&temp_stack, &temp_free_list));
     }
-    free_stack_list(&temp_fill_checking);
-    free_stack_list(&temp_fill_reserve);
 
-    return 1;
+    free_stack_list(&temp_stack);
 }
