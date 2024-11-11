@@ -50,7 +50,6 @@ void sort_stacks(StackArray *stack1, StackArray *stack2, StackArray *sorted_stac
 {
     init_stack_array(sorted_stack);
 
-    // Step 1: Merge stack1 and stack2 into sorted_stack
     while (!is_empty_array(stack1))
     {
         push_array(sorted_stack, pop_array(stack1));
@@ -60,7 +59,6 @@ void sort_stacks(StackArray *stack1, StackArray *stack2, StackArray *sorted_stac
         push_array(sorted_stack, pop_array(stack2));
     }
 
-    // Step 2: Sort using temp_stack
     StackArray temp_stack;
     init_stack_array(&temp_stack);
 
@@ -68,17 +66,14 @@ void sort_stacks(StackArray *stack1, StackArray *stack2, StackArray *sorted_stac
     {
         int temp = pop_array(sorted_stack);
 
-        // Move elements from temp_stack to sorted_stack if they are greater than temp
         while (!is_empty_array(&temp_stack) && temp_stack.str[temp_stack.top] > temp)
         {
             push_array(sorted_stack, pop_array(&temp_stack));
         }
 
-        // Push temp into its correct position in temp_stack
         push_array(&temp_stack, temp);
     }
 
-    // Step 3: Move sorted elements back to sorted_stack (in ascending order)
     while (!is_empty_array(&temp_stack))
     {
         push_array(sorted_stack, pop_array(&temp_stack));
