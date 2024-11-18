@@ -2,33 +2,34 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <sys/resource.h>
+#include <locale.h>
 
-#define MAX_BOOKS 100
+#define MAX_BOOKS 5000
+#define MAX_BOOKS_SORT 10000
 
 typedef enum
 {
-    TECHNICAL,
-    FICTION,
-    CHILDREN
+    TECHNICAL, // техническая литература
+    FICTION,   // художественная
+    CHILDREN   // детская
 } BookType;
 
 typedef struct
 {
-    char branch[50];
-    char origin[20];
-    int year;
+    char branch[50]; // отрасль
+    char origin[50]; // отечественная / переводная
+    int year;        // год издания
 } Technical;
 
 typedef struct
 {
-    char genre[30];
+    char genre[30]; // жанр
 } Fiction;
 
 typedef struct
 {
-    int min_age;
-    char genre[30];
+    int min_age;    // мин. возраст
+    char genre[30]; // жанр
 } Children;
 
 typedef union
@@ -40,12 +41,12 @@ typedef union
 
 typedef struct
 {
-    char author[50];
-    char title[100];
-    char publisher[50];
-    int pages;
-    BookType type;
-    BookDetails details;
+    char author[50];     // автор
+    char title[100];     // название
+    char publisher[50];  // издатель
+    int pages;           // кол-во страниц
+    BookType type;       // тип книги
+    BookDetails details; // детали
 } Book;
 
 typedef struct
@@ -59,7 +60,7 @@ void delete_book_by_title(Book books[], int *book_count, const char *title);
 void display_books(Book books[], int book_count);
 void display_sorted_books_by_author(Book books[], int book_count);
 void display_sorted_books_using_author_table(Book books[], int book_count, AuthorIndex author_table[]);
-void measure_sorting_performance(Book books[], int book_count, AuthorIndex author_table[]);
+void measure_sorting_performance(void);
 void display_author_fiction_books(Book books[], int book_count);
 
 void quicksort_books(Book books[], int count);
@@ -70,6 +71,25 @@ void print_table_header();
 void print_book_table_row(const Book *book);
 int compare_books_by_author(const void *a, const void *b);
 int compare_author_index(const void *a, const void *b);
+
+void generate_random_string(char *str, size_t size)
+{
+    const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    for (size_t i = 0; i < size - 1; i++)
+    {
+        str[i] = charset[rand() % (sizeof(charset) - 1)];
+    }
+    str[size - 1] = '\0';
+}
+
+void generate_random_book(Book *book)
+{
+    generate_random_string(book->author, sizeof(book->author));
+    generate_random_string(book->title, sizeof(book->title));
+    generate_random_string(book->publisher, sizeof(book->publisher));
+    book->pages = rand() % 1000 + 50;
+    book->type = rand() % 3;
+}
 
 void print_author_table(const AuthorIndex author_table[], int count)
 {
@@ -93,6 +113,9 @@ void create_author_index(const Book books[], AuthorIndex author_table[], int boo
 
 int main(void)
 {
+    setlocale(LC_ALL, "Rus");
+    srand((unsigned int)time(NULL));
+
     int book_count = 40;
     Book books[MAX_BOOKS] = {
         {"Newton", "Principia Mathematica", "Royal Society", 500, TECHNICAL, {.tech = {"Physics", "Translated", 1687}}},
@@ -181,7 +204,7 @@ int main(void)
             display_sorted_books_by_author(books, book_count);
             break;
         case 6:
-            measure_sorting_performance(books, book_count, author_table);
+            measure_sorting_performance();
             break;
         case 7:
             display_sorted_books_using_author_table(books, book_count, author_table);
@@ -234,18 +257,32 @@ void add_book(Book books[], int *book_count)
     }
 
     Book new_book;
-
     printf("Введите фамилию автора: ");
     fgets(new_book.author, 50, stdin);
     new_book.author[strcspn(new_book.author, "\n")] = '\0';
+    if (strlen(new_book.author) == 0)
+    {
+        printf("Ошибка: Фамилия автора не может быть пустой.\n");
+        return;
+    }
 
     printf("Введите название книги: ");
     fgets(new_book.title, 100, stdin);
     new_book.title[strcspn(new_book.title, "\n")] = '\0';
+    if (strlen(new_book.title) == 0)
+    {
+        printf("Ошибка: Название книги не может быть пустым.\n");
+        return;
+    }
 
     printf("Введите издательство: ");
     fgets(new_book.publisher, 50, stdin);
     new_book.publisher[strcspn(new_book.publisher, "\n")] = '\0';
+    if (strlen(new_book.publisher) == 0)
+    {
+        printf("Ошибка: Издательство не может быть пустым.\n");
+        return;
+    }
 
     printf("Введите количество страниц: ");
     while (scanf("%d", &new_book.pages) != 1 || new_book.pages <= 0)
@@ -272,47 +309,77 @@ void add_book(Book books[], int *book_count)
         fgets(new_book.details.tech.branch, 50, stdin);
         new_book.details.tech.branch[strcspn(new_book.details.tech.branch, "\n")] = '\0';
 
+        printf("Выберите происхождение (0 - Отечественная, 1 - Переводная): ");
         while (1)
         {
-            printf("Введите происхождение (Отечественная/Переводная): ");
-            fgets(new_book.details.tech.origin, 20, stdin);
-            new_book.details.tech.origin[strcspn(new_book.details.tech.origin, "\n")] = '\0';
+            char origin_input[10];
+            int origin_choice;
+            printf("Введите происхождение (0 - Отечественная, 1 - Переводная): ");
+            fgets(origin_input, sizeof(origin_input), stdin);
+            if (sscanf(origin_input, "%d", &origin_choice) == 1 && (origin_choice == 0 || origin_choice == 1))
+            {
+                if (origin_choice == 0)
+                {
+                    strcpy(new_book.details.tech.origin, "Отечественная");
+                }
+                else
+                {
+                    strcpy(new_book.details.tech.origin, "Переводная");
+                }
+                break;
+            }
+            else
+            {
+                printf("Ошибка: Введите корректное значение (0 или 1).\n");
+            }
+        }
 
-            if (strcmp(new_book.details.tech.origin, "Отечественная") == 0 || strcmp(new_book.details.tech.origin, "Переводная") == 0)
+        while (1)
+        {
+            char year_input[10];
+            printf("Введите год издания: ");
+            fgets(year_input, sizeof(year_input), stdin);
+            if (sscanf(year_input, "%d", &new_book.details.tech.year) == 1 && new_book.details.tech.year > 0)
             {
                 break;
             }
             else
             {
-                printf("Ошибка: Введите корректное происхождение (Отечественная или Переводная).\n");
+                printf("Ошибка: Введите положительное число (год).\n");
             }
         }
-
-        printf("Введите год издания: ");
-        int rc = scanf("%d", &new_book.details.tech.year);
-        while (rc != 1 || new_book.details.tech.year < 0)
-        {
-            printf("Ошибка: Введите положительное число (год): ");
-            while (getchar() != '\n')
-                ;
-        }
-        getchar();
         break;
 
     case FICTION:
+        printf("Выберите жанр:\n");
+        printf("1. Роман\n");
+        printf("2. Пьеса\n");
+        printf("3. Поэзия\n");
+        char genre_input[10];
+        int genre_choice;
         while (1)
         {
-            printf("Введите жанр (роман, пьеса, поэзия): ");
-            fgets(new_book.details.fiction.genre, 30, stdin);
-            new_book.details.fiction.genre[strcspn(new_book.details.fiction.genre, "\n")] = '\0';
-
-            if (strcmp(new_book.details.fiction.genre, "роман") == 0 || strcmp(new_book.details.fiction.genre, "пьеса") == 0 || strcmp(new_book.details.fiction.genre, "поэзия") == 0)
+            printf("Введите номер жанра (1, 2 или 3): ");
+            fgets(genre_input, sizeof(genre_input), stdin);
+            if (sscanf(genre_input, "%d", &genre_choice) == 1 && genre_choice >= 1 && genre_choice <= 3)
             {
+                switch (genre_choice)
+                {
+                case 1:
+                    strcpy(new_book.details.fiction.genre, "роман");
+                    break;
+                case 2:
+                    strcpy(new_book.details.fiction.genre, "пьеса");
+                    break;
+                case 3:
+                    strcpy(new_book.details.fiction.genre, "поэзия");
+                    break;
+                }
                 break;
             }
             else
             {
-                printf("Ошибка: Введите корректный жанр (роман, пьеса или поэзия).\n");
+                printf("Ошибка: Введите корректное значение (1, 2 или 3).\n");
             }
         }
         break;
@@ -327,19 +394,28 @@ void add_book(Book books[], int *book_count)
         }
         getchar();
 
+        printf("Выберите жанр детской литературы:\n");
+        printf("1. Стихи\n");
+        printf("2. Сказки\n");
         while (1)
         {
-            printf("Введите тип детской литературы (стихи, сказки): ");
-            fgets(new_book.details.children.genre, 30, stdin);
-            new_book.details.children.genre[strcspn(new_book.details.children.genre, "\n")] = '\0';
-
-            if (strcmp(new_book.details.children.genre, "стихи") == 0 || strcmp(new_book.details.children.genre, "сказки") == 0)
+            printf("Введите номер жанра (1 или 2): ");
+            fgets(genre_input, sizeof(genre_input), stdin);
+            if (sscanf(genre_input, "%d", &genre_choice) == 1 && (genre_choice == 1 || genre_choice == 2))
             {
+                if (genre_choice == 1)
+                {
+                    strcpy(new_book.details.children.genre, "стихи");
+                }
+                else
+                {
+                    strcpy(new_book.details.children.genre, "сказки");
+                }
                 break;
             }
             else
             {
-                printf("Ошибка: Введите корректный тип детской литературы (стихи или сказки).\n");
+                printf("Ошибка: Введите корректное значение (1 или 2).\n");
             }
         }
         break;
@@ -400,7 +476,6 @@ void bubble_sort_books_by_author(Book books[], int book_count)
     }
 }
 
-
 // Функция сортировки изначальной таблицы по автору
 void display_sorted_books_by_author(Book books[], int book_count)
 {
@@ -416,7 +491,6 @@ void display_sorted_books_by_author(Book books[], int book_count)
     printf("\nКниги, отсортированные по автору (сортировка пузырьком):\n");
     display_books(temp_books, book_count);
 }
-
 
 void bubble_sort_books_by_author_table(AuthorIndex author_table[], int book_count)
 {
@@ -466,47 +540,80 @@ void display_sorted_books_using_author_table(Book books[], int book_count, Autho
 }
 
 // Замерный эксперимент
-void measure_sorting_performance(Book books[], int book_count, AuthorIndex author_table[])
+void measure_sorting_performance(void)
 {
-    struct rusage usage;
+    for (int book_count = 1000; book_count <= MAX_BOOKS_SORT; book_count += 1000)
+    {
+        Book books[MAX_BOOKS_SORT];
+        AuthorIndex author_table[MAX_BOOKS_SORT];
 
-    Book temp_books[MAX_BOOKS];
-    memcpy(temp_books, books, sizeof(Book) * book_count);
+        // Генерация массива книг
+        for (int i = 0; i < book_count; i++)
+        {
+            generate_random_book(&books[i]);
+            strncpy(author_table[i].author, books[i].author, sizeof(author_table[i].author));
+            author_table[i].index = i;
+        }
 
-    clock_t start_time = clock();
-    quicksort_books(temp_books, book_count);
-    clock_t end_time = clock();
-    printf("\nОбычная сортировка книг:\n");
+        printf("\nСортировка массива из %d книг (усреднённое время за 10 повторений):\n", book_count);
 
-    printf("\n Книги, отсортированные по автору (быстрая сортировка):\n");
-    printf("Время выполнения: %.12f секунд\n", (double)(end_time - start_time) / CLOCKS_PER_SEC);
+        double total_time = 0;
 
-    start_time = clock();
-    bubble_sort_books_by_author(temp_books, book_count);
-    end_time = clock();
+        // Быстрая сортировка книг
+        for (int i = 0; i < 10; i++)
+        {
+            Book temp_books[MAX_BOOKS];
+            memcpy(temp_books, books, sizeof(Book) * book_count);
+            clock_t start_time = clock();
+            quicksort_books(temp_books, book_count);
+            clock_t end_time = clock();
+            total_time += (double)(end_time - start_time) / CLOCKS_PER_SEC;
+        }
+        printf("Быстрая сортировка: %.12f секунд\n", total_time / 10);
 
-    printf("\n Книги, отсортированные по автору (сортировка пузырьком):\n");
-    printf("Время выполнения: %.12f секунд\n", (double)(end_time - start_time) / CLOCKS_PER_SEC);
+        // Сортировка пузырьком книг
+        total_time = 0;
+        for (int i = 0; i < 10; i++)
+        {
+            Book temp_books[MAX_BOOKS];
+            memcpy(temp_books, books, sizeof(Book) * book_count);
+            clock_t start_time = clock();
+            bubble_sort_books_by_author(temp_books, book_count);
+            clock_t end_time = clock();
+            total_time += (double)(end_time - start_time) / CLOCKS_PER_SEC;
+        }
+        printf("Сортировка пузырьком: %.12f секунд\n", total_time / 10);
 
-    getrusage(RUSAGE_SELF, &usage);
-    printf("Использование памяти: %ld KB\n", usage.ru_maxrss);
+        printf("Использовано памяти (массив книг), байт: %zu\n\n", sizeof(Book) * book_count);
+        //
+        // Быстрая сортировка таблицы авторов
+        total_time = 0;
+        for (int i = 0; i < 10; i++)
+        {
+            AuthorIndex temp_author_table[MAX_BOOKS];
+            memcpy(temp_author_table, author_table, sizeof(AuthorIndex) * book_count);
+            clock_t start_time = clock();
+            quicksort_author_table(temp_author_table, book_count);
+            clock_t end_time = clock();
+            total_time += (double)(end_time - start_time) / CLOCKS_PER_SEC;
+        }
+        printf("Сортировка таблицы авторов (быстрая): %.12f секунд\n", total_time / 10);
 
-    start_time = clock();
-    quicksort_author_table(author_table, book_count);
-    end_time = clock();
-    printf("\nСортировка по таблице ключей:\n");
-    printf("Книги, отсортированные по таблице авторов (быстрая сортировка):\n");
-    printf("Время выполнения: %.12f секунд\n", (double)(end_time - start_time) / CLOCKS_PER_SEC);
+        // Сортировка пузырьком таблицы авторов
+        total_time = 0;
+        for (int i = 0; i < 10; i++)
+        {
+            AuthorIndex temp_author_table[MAX_BOOKS];
+            memcpy(temp_author_table, author_table, sizeof(AuthorIndex) * book_count);
+            clock_t start_time = clock();
+            bubble_sort_books_by_author_table(temp_author_table, book_count);
+            clock_t end_time = clock();
+            total_time += (double)(end_time - start_time) / CLOCKS_PER_SEC;
+        }
+        printf("Сортировка таблицы авторов (пузырьком): %.12f секунд\n", total_time / 10);
 
-    start_time = clock();
-    bubble_sort_books_by_author_table(author_table, book_count);
-    end_time = clock();
-
-    printf("\nКниги, отсортированные по таблице авторов (сортировка пузырьком):\n");
-    printf("Время выполнения: %.12f секунд\n", (double)(end_time - start_time) / CLOCKS_PER_SEC);
-
-    getrusage(RUSAGE_SELF, &usage);
-    printf("Использование памяти: %ld KB\n", usage.ru_maxrss);
+        printf("Использовано памяти (таблица авторов), байт: %zu\n\n", sizeof(AuthorIndex) * book_count);
+    }
 }
 
 void quicksort_books(Book books[], int count)

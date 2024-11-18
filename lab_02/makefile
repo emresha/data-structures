@@ -1,2 +1,2 @@
 app.exe : main.c
-	gcc -o $@ $<
+	gcc -std=c99 -Wall -Werror -Wpedantic -o app.exe main.c
