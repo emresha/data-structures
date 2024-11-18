@@ -58,8 +58,8 @@ void add_book(Book books[], int *book_count);
 void delete_book_by_title(Book books[], int *book_count, const char *title);
 void display_books(Book books[], int book_count);
 void display_sorted_books_by_author(Book books[], int book_count);
-void display_sorted_books_using_author_table(Book books[], int book_count);
-void measure_sorting_performance(Book books[], int book_count);
+void display_sorted_books_using_author_table(Book books[], int book_count, AuthorIndex author_table[]);
+void measure_sorting_performance(Book books[], int book_count, AuthorIndex author_table[]);
 void display_author_fiction_books(Book books[], int book_count);
 
 void quicksort_books(Book books[], int count);
@@ -70,6 +70,26 @@ void print_table_header();
 void print_book_table_row(const Book *book);
 int compare_books_by_author(const void *a, const void *b);
 int compare_author_index(const void *a, const void *b);
+
+void print_author_table(const AuthorIndex author_table[], int count)
+{
+    printf("\nТаблица авторов (ключи):\n");
+    printf("| %-5s | %-20s |\n", "Ключ", "Автор");
+    printf("+-------+----------------------+\n");
+    for (int i = 0; i < count; i++)
+    {
+        printf("| %-5d | %-20s |\n", author_table[i].index, author_table[i].author);
+    }
+}
+
+void create_author_index(const Book books[], AuthorIndex author_table[], int book_count)
+{
+    for (int i = 0; i < book_count; i++)
+    {
+        author_table[i].index = i;
+        strcpy(author_table[i].author, books[i].author);
+    }
+}
 
 int main(void)
 {
@@ -124,14 +144,18 @@ int main(void)
         printf("1. Добавить книгу\n");
         printf("2. Удалить книгу по названию\n");
         printf("3. Просмотреть список книг\n");
-        printf("4. Просмотреть книги, отсортированные по автору (обычная сортировка)\n");
-        printf("5. Измерить производительность сортировок\n");
-        printf("6. Просмотреть книги, отсортированные по автору (таблица авторов)\n");
-        printf("7. Показать все романы автора\n"); //
-        printf("8. Выход\n");
+        printf("4. Просмотреть таблицу ключей\n");
+        printf("5. Просмотреть книги, отсортированные по автору (обычная сортировка)\n");
+        printf("6. Измерить производительность сортировок\n");
+        printf("7. Просмотреть книги, отсортированные по автору (таблица авторов)\n");
+        printf("8. Показать все романы автора\n");
+        printf("9. Выход\n");
         printf("Ваш выбор: ");
         scanf("%d", &choice);
         getchar();
+
+        AuthorIndex author_table[MAX_BOOKS];
+        create_author_index(books, author_table, book_count);
 
         switch (choice)
         {
@@ -151,18 +175,21 @@ int main(void)
             display_books(books, book_count);
             break;
         case 4:
-            display_sorted_books_by_author(books, book_count);
+            print_author_table(author_table, book_count);
             break;
         case 5:
-            measure_sorting_performance(books, book_count);
+            display_sorted_books_by_author(books, book_count);
             break;
         case 6:
-            display_sorted_books_using_author_table(books, book_count);
+            measure_sorting_performance(books, book_count, author_table);
             break;
         case 7:
-            display_author_fiction_books(books, book_count);
+            display_sorted_books_using_author_table(books, book_count, author_table);
             break;
         case 8:
+            display_author_fiction_books(books, book_count);
+            break;
+        case 9:
             exit(0);
         default:
             printf("Неверный выбор.\n");
@@ -356,6 +383,24 @@ void display_books(Book books[], int book_count)
     }
 }
 
+// Функция сортировки пузырьком по автору
+void bubble_sort_books_by_author(Book books[], int book_count)
+{
+    for (int i = 0; i < book_count - 1; i++)
+    {
+        for (int j = 0; j < book_count - i - 1; j++)
+        {
+            if (strcmp(books[j].author, books[j + 1].author) > 0)
+            {
+                Book temp = books[j];
+                books[j] = books[j + 1];
+                books[j + 1] = temp;
+            }
+        }
+    }
+}
+
+
 // Функция сортировки изначальной таблицы по автору
 void display_sorted_books_by_author(Book books[], int book_count)
 {
@@ -363,34 +408,65 @@ void display_sorted_books_by_author(Book books[], int book_count)
     memcpy(temp_books, books, sizeof(Book) * book_count);
 
     quicksort_books(temp_books, book_count);
-    printf("\nКниги, отсортированные по автору (обычная сортировка):\n");
+    printf("\nКниги, отсортированные по автору (быстрая сортировка):\n");
+    display_books(temp_books, book_count);
+
+    memcpy(temp_books, books, sizeof(Book) * book_count);
+    bubble_sort_books_by_author(temp_books, book_count);
+    printf("\nКниги, отсортированные по автору (сортировка пузырьком):\n");
     display_books(temp_books, book_count);
 }
 
-// Функция сортировки используя дополнительную таблицу "по ключам"
-void display_sorted_books_using_author_table(Book books[], int book_count)
+
+void bubble_sort_books_by_author_table(AuthorIndex author_table[], int book_count)
 {
-    AuthorIndex author_table[MAX_BOOKS];
-
-    for (int i = 0; i < book_count; i++)
+    for (int i = 0; i < book_count - 1; i++)
     {
-        author_table[i].index = i;
-        strcpy(author_table[i].author, books[i].author);
-    }
-
-    quicksort_author_table(author_table, book_count);
-
-    printf("\nКниги, отсортированные по таблице авторов:\n");
-    print_table_header();
-    for (int i = 0; i < book_count; i++)
-    {
-        int idx = author_table[i].index;
-        print_book_table_row(&books[idx]);
+        for (int j = 0; j < book_count - i - 1; j++)
+        {
+            if (strcmp(author_table[j].author, author_table[j + 1].author) > 0)
+            {
+                AuthorIndex temp = author_table[j];
+                author_table[j] = author_table[j + 1];
+                author_table[j + 1] = temp;
+            }
+        }
     }
 }
 
+// Функция сортировки используя дополнительную таблицу "по ключам"
+void display_sorted_books_using_author_table(Book books[], int book_count, AuthorIndex author_table[])
+{
+    AuthorIndex temp_author_table[MAX_BOOKS];
+
+    memcpy(temp_author_table, author_table, sizeof(AuthorIndex) * book_count);
+
+    quicksort_author_table(temp_author_table, book_count);
+
+    printf("\nКниги, отсортированные (quicksort) по таблице авторов:\n");
+    print_table_header();
+    for (int i = 0; i < book_count; i++)
+    {
+        int idx = temp_author_table[i].index;
+        print_book_table_row(&books[idx]);
+    }
+
+    memcpy(temp_author_table, author_table, sizeof(AuthorIndex) * book_count);
+    bubble_sort_books_by_author_table(temp_author_table, book_count);
+
+    printf("\nКниги, отсортированные (bubblesort) по таблице авторов:\n");
+    print_table_header();
+    for (int i = 0; i < book_count; i++)
+    {
+        int idx = temp_author_table[i].index;
+        print_book_table_row(&books[idx]);
+    }
+
+    return;
+}
+
 // Замерный эксперимент
-void measure_sorting_performance(Book books[], int book_count)
+void measure_sorting_performance(Book books[], int book_count, AuthorIndex author_table[])
 {
     struct rusage usage;
 
@@ -401,22 +477,32 @@ void measure_sorting_performance(Book books[], int book_count)
     quicksort_books(temp_books, book_count);
     clock_t end_time = clock();
     printf("\nОбычная сортировка книг:\n");
+
+    printf("\n Книги, отсортированные по автору (быстрая сортировка):\n");
+    printf("Время выполнения: %.12f секунд\n", (double)(end_time - start_time) / CLOCKS_PER_SEC);
+
+    start_time = clock();
+    bubble_sort_books_by_author(temp_books, book_count);
+    end_time = clock();
+
+    printf("\n Книги, отсортированные по автору (сортировка пузырьком):\n");
     printf("Время выполнения: %.12f секунд\n", (double)(end_time - start_time) / CLOCKS_PER_SEC);
 
     getrusage(RUSAGE_SELF, &usage);
     printf("Использование памяти: %ld KB\n", usage.ru_maxrss);
 
-    AuthorIndex author_table[MAX_BOOKS];
-    for (int i = 0; i < book_count; i++)
-    {
-        author_table[i].index = i;
-        strcpy(author_table[i].author, books[i].author);
-    }
-
     start_time = clock();
     quicksort_author_table(author_table, book_count);
     end_time = clock();
-    printf("\nСортировка по таблице авторов:\n");
+    printf("\nСортировка по таблице ключей:\n");
+    printf("Книги, отсортированные по таблице авторов (быстрая сортировка):\n");
+    printf("Время выполнения: %.12f секунд\n", (double)(end_time - start_time) / CLOCKS_PER_SEC);
+
+    start_time = clock();
+    bubble_sort_books_by_author_table(author_table, book_count);
+    end_time = clock();
+
+    printf("\nКниги, отсортированные по таблице авторов (сортировка пузырьком):\n");
     printf("Время выполнения: %.12f секунд\n", (double)(end_time - start_time) / CLOCKS_PER_SEC);
 
     getrusage(RUSAGE_SELF, &usage);
