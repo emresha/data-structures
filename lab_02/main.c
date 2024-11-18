@@ -113,8 +113,11 @@ void create_author_index(const Book books[], AuthorIndex author_table[], int boo
 
 int main(void)
 {
-    setlocale(LC_ALL, "Rus");
+    setlocale(LC_ALL, "UTF-8");
     srand((unsigned int)time(NULL));
+    
+    printf("Программа для взаимодействия с массивом книг, вы можете добавлять, удалять, искать книги.\nТакже имеется возможность измерения производительности разного вида сортировок.");
+
 
     int book_count = 40;
     Book books[MAX_BOOKS] = {
@@ -174,8 +177,13 @@ int main(void)
         printf("8. Показать все романы автора\n");
         printf("9. Выход\n");
         printf("Ваш выбор: ");
-        scanf("%d", &choice);
-        getchar();
+        char choice_input[10];
+        fgets(choice_input, sizeof(choice_input), stdin);
+        if (sscanf(choice_input, "%d", &choice) != 1)
+        {
+            printf("Ошибка: Введите число.\n");
+            continue;
+        }
 
         AuthorIndex author_table[MAX_BOOKS];
         create_author_index(books, author_table, book_count);
@@ -245,6 +253,8 @@ void display_author_fiction_books(Book books[], int book_count)
     {
         printf("Романы автора \"%s\" не найдены.\n", author);
     }
+
+    return;
 }
 
 // Функция добавления книги
@@ -308,8 +318,12 @@ void add_book(Book books[], int *book_count)
         printf("Введите отрасль: ");
         fgets(new_book.details.tech.branch, 50, stdin);
         new_book.details.tech.branch[strcspn(new_book.details.tech.branch, "\n")] = '\0';
+        if (strlen(new_book.details.tech.branch) == 0)
+        {
+            printf("Ошибка: Отрасль не может быть пустой.\n");
+            return;
+        }
 
-        printf("Выберите происхождение (0 - Отечественная, 1 - Переводная): ");
         while (1)
         {
             char origin_input[10];
