@@ -541,7 +541,15 @@ int main(void)
         {
             int search_value;
             printf("Введите число для поиска: ");
-            scanf("%d", &search_value);
+            char input[10];
+            if (fgets(input, sizeof(input), stdin) != NULL)
+            {
+                if (sscanf(input, "%d", &search_value) != 1)
+                {
+                    printf("Ошибка: Введите корректное число.\n");
+                    continue;
+                }
+            }
 
             TreeNode *result = search(root, search_value);
             if (result)

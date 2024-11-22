@@ -68,6 +68,7 @@ void quicksort_author_table(AuthorIndex author_table[], int count);
 
 void print_memory_usage();
 void print_table_header();
+void print_sorted_index(AuthorIndex author_table[], int count);
 void print_book_table_row(const Book *book);
 int compare_books_by_author(const void *a, const void *b);
 int compare_author_index(const void *a, const void *b);
@@ -138,7 +139,7 @@ int main(void)
         {"García Márquez", "One Hundred Years of Solitude", "Harper & Row", 417, FICTION, {.fiction = {"Magic Realism"}}},
         {"Dostoevsky", "Crime and Punishment", "The Russian Messenger", 671, FICTION, {.fiction = {"Psychological"}}},
         {"Dahl", "Charlie and the Chocolate Factory", "Alfred A. Knopf", 176, CHILDREN, {.children = {8, "Adventure"}}},
-        {"Lewis", "The Chronicles of Narnia: The Lion, the Witch and the Wardrobe", "Geoffrey Bles", 206, CHILDREN, {.children = {9, "Fantasy"}}},
+        {"Lewis", "The Chronicles of Narnia", "Geoffrey Bles", 206, CHILDREN, {.children = {9, "Fantasy"}}},
         {"Darwin", "On the Origin of Species", "John Murray", 502, TECHNICAL, {.tech = {"Biology", "Domestic", 1859}}},
         {"Feynman", "The Feynman Lectures on Physics", "Addison-Wesley", 1552, TECHNICAL, {.tech = {"Physics", "Domestic", 1964}}},
         {"Lee", "To Kill a Mockingbird", "J.B. Lippincott & Co.", 281, FICTION, {.fiction = {"Southern Gothic"}}},
@@ -158,7 +159,7 @@ int main(void)
         {"Sendak", "Where the Wild Things Are", "Harper & Row", 48, CHILDREN, {.children = {4, "Fantasy"}}},
         {"Carroll", "Through the Looking-Glass", "Macmillan", 224, CHILDREN, {.children = {8, "Fantasy"}}},
         {"Edison", "The Diary of Thomas Edison", "Harper & Brothers", 350, TECHNICAL, {.tech = {"Inventions", "Domestic", 1930}}},
-        {"Mendel", "Experiments on Plant Hybridization", "Verhandlungen des naturforschenden Vereins", 150, TECHNICAL, {.tech = {"Genetics", "Translated", 1866}}},
+        {"Mendel", "Experiments on Plant Hybridization", "Verhandlungen", 150, TECHNICAL, {.tech = {"Genetics", "Translated", 1866}}},
         {"Shakespeare", "Hamlet", "Oxford University Press", 400, FICTION, {.fiction = {"Tragedy"}}},
         {"Verne", "Twenty Thousand Leagues Under the Sea", "Pierre-Jules Hetzel", 437, FICTION, {.fiction = {"Science Fiction"}}}};
 
@@ -175,7 +176,8 @@ int main(void)
         printf("6. Измерить производительность сортировок\n");
         printf("7. Просмотреть книги, отсортированные по автору (таблица авторов)\n");
         printf("8. Показать все романы автора\n");
-        printf("9. Выход\n");
+        printf("9. Отсортировать массив индексов\n");
+        printf("10. Выход\n");
         printf("Ваш выбор: ");
         char choice_input[10];
         fgets(choice_input, sizeof(choice_input), stdin);
@@ -221,6 +223,9 @@ int main(void)
             display_author_fiction_books(books, book_count);
             break;
         case 9:
+            print_sorted_index(author_table, book_count);
+            break;
+        case 10:
             exit(0);
         default:
             printf("Неверный выбор.\n");
@@ -647,6 +652,15 @@ void quicksort_author_table(AuthorIndex author_table[], int count)
     qsort(author_table, count, sizeof(AuthorIndex), compare_author_index);
 }
 
+void print_sorted_index(AuthorIndex author_table[], int count)
+{
+    AuthorIndex *author_table_copy = malloc(sizeof(AuthorIndex) * count);
+    memmove(author_table_copy, author_table, sizeof(AuthorIndex) * count);
+
+    qsort(author_table_copy, count, sizeof(AuthorIndex), compare_author_index);
+    print_author_table(author_table_copy, count);
+}
+
 int compare_author_index(const void *a, const void *b)
 {
     const AuthorIndex *ai1 = (const AuthorIndex *)a;
@@ -656,11 +670,50 @@ int compare_author_index(const void *a, const void *b)
 
 void print_table_header()
 {
-    printf("%-20s %-30s %-20s %-10s\n", "Автор", "Название", "Издатель", "Страницы");
-    printf("----------------------------------------------------------------------------------\n");
+    printf("%-35s %-50s %-25s %-20s %-10s\n", "Автор", "Название", "Издатель", "Страницы", "Доп. Информация");
+    printf("--------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
 }
 
 void print_book_table_row(const Book *book)
 {
-    printf("%-20s %-30s %-20s %-10d\n", book->author, book->title, book->publisher, book->pages);
+    char temp[100];
+    strcpy(temp, book->title);
+    if (strlen(book->title) > 35)
+    {
+        temp[32] = '.';
+        temp[33] = '.';
+        temp[34] = '.';
+        temp[35] = 0;
+    }
+
+    char type[30];
+    char type_details[200];
+
+    if (book->type == 0)
+    {
+        strcpy(type, "Техническая");
+        sprintf(type_details, "Отрасль: %s, %s, год издания: %d", book->details.tech.branch, book->details.tech.origin, book->details.tech.year);
+    }
+    else if (book->type == 1)
+    {
+        strcpy(type, "Художественная");
+        sprintf(type_details, "Жанр: %s", book->details.fiction.genre);
+    }
+    else
+    {
+        sprintf(type_details, "Жанр: %s, мин. возраст: %d", book->details.children.genre, book->details.children.min_age);
+        strcpy(type, "Детская");        
+    }
+
+    char temp_izd[100];
+    strcpy(temp_izd, book->title);
+    if (strlen(book->title) > 15)
+    {
+        temp_izd[12] = '.';
+        temp_izd[13] = '.';
+        temp_izd[14] = '.';
+        temp_izd[15] = 0;
+    }
+
+    printf("%-30s %-40s %-20s %-10d %-30s %-30s\n", book->author, temp, temp_izd, book->pages, type, type_details);
 }

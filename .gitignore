@@ -2,3 +2,7 @@
 *.txt
 .vscode
 *.o
+*.dot
+*.png
+*.zip
+*.pdf
