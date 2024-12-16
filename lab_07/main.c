@@ -15,7 +15,7 @@ typedef struct HashTable
 {
     HashNode **table;
     size_t occupied;
-    size_t size;
+    int size;
 } HashTable;
 
 void rehash(HashTable **hash_table_ptr, int *current_size);
@@ -906,7 +906,6 @@ int search_hash(HashTable *hash_table, int key, int *comparisons)
     return 0;
 }
 
-
 int delete_hash(HashTable *hash_table, int key)
 {
     int index = hash_function(key, hash_table->size);
@@ -1364,16 +1363,20 @@ void compare_structures(void)
     printf("-------------------------------------------------------------------------------\n");
 }
 
-void store_inorder(TreeNode *node, TreeNode **nodes, int *index) {
-    if (!node) return;
+void store_inorder(TreeNode *node, TreeNode **nodes, int *index)
+{
+    if (!node)
+        return;
 
     store_inorder(node->left, nodes, index);
     nodes[(*index)++] = node;
     store_inorder(node->right, nodes, index);
 }
 
-TreeNode *build_balanced_bst(TreeNode **nodes, int start, int end) {
-    if (start > end) return NULL;
+TreeNode *build_balanced_bst(TreeNode **nodes, int start, int end)
+{
+    if (start > end)
+        return NULL;
 
     int mid = (start + end) / 2;
     TreeNode *root = nodes[mid];
@@ -1384,21 +1387,25 @@ TreeNode *build_balanced_bst(TreeNode **nodes, int start, int end) {
     return root;
 }
 
-int count_nodes(TreeNode *node) 
+int count_nodes(TreeNode *node)
 {
-    if (!node) return 0;
+    if (!node)
+        return 0;
     return 1 + count_nodes(node->left) + count_nodes(node->right);
 }
 
-TreeNode *balance_bst(TreeNode *root) {
-    if (!root) return NULL;
+TreeNode *balance_bst(TreeNode *root)
+{
+    if (!root)
+        return NULL;
 
     TreeNode *current = root;
 
     int count = count_nodes(current);
 
     TreeNode **nodes = (TreeNode **)malloc(count * sizeof(TreeNode *));
-    if (!nodes) {
+    if (!nodes)
+    {
         printf("Ошибка выделения памяти для балансировки дерева.\n");
         exit(EXIT_FAILURE);
     }
@@ -1411,41 +1418,51 @@ TreeNode *balance_bst(TreeNode *root) {
     return balanced_root;
 }
 
-void read_from_file_hash(const char *filename, HashTable *hash_table) {
-    if (!hash_table || !hash_table->table) {
+void read_from_file_hash(const char *filename, HashTable *hash_table)
+{
+    if (!hash_table || !hash_table->table)
+    {
         printf("Ошибка: Хеш-таблица не инициализирована.\n");
         return;
     }
 
     FILE *file = fopen(filename, "r");
-    if (!file) {
+    if (!file)
+    {
         printf("Ошибка открытия файла.\n");
         return;
     }
 
     int value;
-    while (fscanf(file, "%d", &value) == 1) {
+    while (fscanf(file, "%d", &value) == 1)
+    {
         printf("Чтение значения: %d\n", value); // debugging
-        insert_hash(hash_table, value);
+        // еслм уже есть, то пропускаем
+        if (search_hash(hash_table, value, NULL))
+        {
+            // printf("Значение %d уже существует в хеш-таблице.\n", value);
+            continue;
+        }
+        else
+            insert_hash(hash_table, value);
     }
 
-    if (!feof(file)) {
+    if (!feof(file))
+    {
         printf("Ошибка чтения файла.\n");
     }
 
     fclose(file);
 }
 
-
 int main(void)
 {
     printf("Программа для работы с бинарным деревом, AVL-деревом и хеш-таблицей.\n");
 
-    TreeNode *bst_root = NULL;    // Корень бинарного дерева поиска
-    AVLNode *avl_root = NULL;     // Корень AVL-дерева
-    size_t hash_table_size = 101; // Начальный размер хеш-таблицы
+    TreeNode *bst_root = NULL; // Корень бинарного дерева поиска
+    AVLNode *avl_root = NULL;  // Корень AVL-дерева
+    int hash_table_size = 101; // Начальный размер хеш-таблицы
     HashTable *hash_table = create_hash_table(hash_table_size);
-    HashTableLinear *hash_table_linear = create_hash_table_linear(hash_table_size);
 
     srand(time(NULL));
     char filename[256];
@@ -1493,7 +1510,6 @@ int main(void)
         printf("10. Выполнить рехеширование хеш-таблицы\n");
         printf("11. Показать хеш-таблицу (метод цепочек)\n");
         printf("12. Считать данные из файла в хеш-таблицу\n");
-        printf("13. Показать хеш-таблицу (линейная адресация)\n");
         printf("0. Выйти\n");
         printf("Ваш выбор: ");
 
@@ -1570,7 +1586,6 @@ int main(void)
                 else
                 {
                     insert_hash(hash_table, new_value);
-                    insert_hash_linear(hash_table_linear, new_value);
                     printf("Число добавлено в хеш-таблицу.\n");
                 }
             }
@@ -1677,18 +1692,6 @@ int main(void)
         {
             read_from_file_hash(filename, hash_table);
             printf("Данные успешно считаны из файла в хеш-таблицу.\n");
-            break;
-        }
-        case 13:
-        {
-            printf("Содержимое хеш-таблицы (линейная адресация):\n");
-            for (size_t i = 0; i < hash_table_linear->size; i++)
-            {
-                if (hash_table_linear->table[i].is_occupied)
-                    printf("[%zu]: %d\n", i, hash_table_linear->table[i].key);
-                else
-                    printf("[%zu]: nil\n", i);
-            }
             break;
         }
         case 0:
