@@ -112,6 +112,19 @@ void create_author_index(const Book books[], AuthorIndex author_table[], int boo
     }
 }
 
+void print_table_header_id();
+
+void print_book_table_row_id(const Book *book, int id);
+
+void show_table_by_key_table(AuthorIndex *author_table, Book *books, int book_count)
+{
+    print_table_header_id();
+    for (int i = 0; i < book_count; i++)
+    {
+        print_book_table_row_id(&books[author_table[i].index], author_table[i].index);
+    }
+}
+
 int main(void)
 {
     setlocale(LC_ALL, "UTF-8");
@@ -177,7 +190,8 @@ int main(void)
         printf("7. Просмотреть книги, отсортированные по автору (таблица авторов)\n");
         printf("8. Показать все романы автора\n");
         printf("9. Отсортировать массив индексов\n");
-        printf("10. Выход\n");
+        printf("10. Вывести обычную таблицу по таблице ключей\n");
+        printf("11. Выход\n");
         printf("Ваш выбор: ");
         char choice_input[10];
         fgets(choice_input, sizeof(choice_input), stdin);
@@ -226,6 +240,9 @@ int main(void)
             print_sorted_index(author_table, book_count);
             break;
         case 10:
+            show_table_by_key_table(author_table, books, book_count);
+            break;
+        case 11:
             exit(0);
         default:
             printf("Неверный выбор.\n");
@@ -672,6 +689,56 @@ void print_table_header()
 {
     printf("%-35s %-50s %-25s %-20s %-10s\n", "Автор", "Название", "Издатель", "Страницы", "Доп. Информация");
     printf("--------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
+}
+
+void print_table_header_id()
+{
+    printf("%-5s %-35s %-50s %-25s %-20s %-10s\n", "Id", "Автор", "Название", "Издатель", "Страницы", "Доп. Информация");
+    printf("--------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
+}
+
+void print_book_table_row_id(const Book *book, int id)
+{
+    char temp[100];
+    strcpy(temp, book->title);
+    if (strlen(book->title) > 35)
+    {
+        temp[32] = '.';
+        temp[33] = '.';
+        temp[34] = '.';
+        temp[35] = 0;
+    }
+
+    char type[30];
+    char type_details[200];
+
+    if (book->type == 0)
+    {
+        strcpy(type, "Техническая");
+        sprintf(type_details, "Отрасль: %s, %s, год издания: %d", book->details.tech.branch, book->details.tech.origin, book->details.tech.year);
+    }
+    else if (book->type == 1)
+    {
+        strcpy(type, "Художественная");
+        sprintf(type_details, "Жанр: %s", book->details.fiction.genre);
+    }
+    else
+    {
+        sprintf(type_details, "Жанр: %s, мин. возраст: %d", book->details.children.genre, book->details.children.min_age);
+        strcpy(type, "Детская");        
+    }
+
+    char temp_izd[100];
+    strcpy(temp_izd, book->title);
+    if (strlen(book->title) > 15)
+    {
+        temp_izd[12] = '.';
+        temp_izd[13] = '.';
+        temp_izd[14] = '.';
+        temp_izd[15] = 0;
+    }
+
+    printf("%-5d %-30s %-40s %-20s %-10d %-30s %-30s\n", id, book->author, temp, temp_izd, book->pages, type, type_details);
 }
 
 void print_book_table_row(const Book *book)
