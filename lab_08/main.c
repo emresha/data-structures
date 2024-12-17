@@ -444,6 +444,8 @@ int main(void)
     int pathSize = 0;
     int *path = NULL;
 
+    printf("Программа для поиска Эйлова пути в невзвешенном графе, представленном в виде списка смежности.\n");
+
     while (1)
     {
         displayMenu();
@@ -488,8 +490,12 @@ int main(void)
                 printf("Неверный ввод количества городов. Ожидалось положительное целое число до %d.\n", MAX_VERTICES);
                 break;
             }
+            time_t start_time = clock();
             graph = createGraph(numVertices);
-            printf("Количество городов установлено на %d.\n", numVertices);
+            time_t end_time = clock();
+            double time_taken = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;
+            printf("Количество городов установлено на %d за %.12f c.\n", numVertices, time_taken);
+            printf("Памяти потребовалось: %.2f байт.\n", (double)(sizeof(Graph) + sizeof(AdjList) * numVertices));
             break;
         }
         case 2:
@@ -551,6 +557,7 @@ int main(void)
                 break;
             }
             printf("Введите дороги в формате 'город1 город2' по одной на строку:\n");
+            double time_sum = 0;
             for (int i = 0; i < numEdges; ++i)
             {
                 printf("Дорога %d: ", i + 1);
@@ -575,9 +582,13 @@ int main(void)
                     i--; // Повторить ввод для этой дороги
                     continue;
                 }
+                time_t start_time = clock();
                 addEdge(graph, src, dest);
+                time_t end_time = clock();
+                double time_taken = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;
+                time_sum += time_taken;
             }
-            printf("Дороги успешно введены.\n");
+            printf("Дороги успешно введены; время потребовавшееся для этого: %.12f секунд.\n", time_sum);
             break;
         }
         case 4:
@@ -592,7 +603,9 @@ int main(void)
                 freePath(path);
                 path = NULL;
             }
+            time_t start_time = clock();
             path = findEulerPath(graph, &pathSize);
+            time_t end_time = clock();
             if (path)
             {
                 printf("Найден Эйлов путь:\n");
@@ -608,6 +621,8 @@ int main(void)
             {
                 printf("Эйлов путь не существует в данной системе дорог.\n");
             }
+            double time_taken = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;
+            printf("Время поиска Эйлова пути: %.12f секунд.\n", time_taken);
             break;
         }
         case 5:
