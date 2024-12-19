@@ -4,8 +4,8 @@
 #include <stdbool.h>
 
 #define MAX_QUEUE_SIZE 10000 // Максимальный размер очереди для реализации на массиве
-#define MAX_CYCLES 1000      // Количество заявок для обработки
-
+#define MAX_CYCLES 1000     // Количество заявок для обработки
+#define MAX_QUEUE_LINKED_SIZE 100000 // Максимальный размер очереди для реализации на списке
 #define MAX_ALLOCATIONS 50000 // Максимальное количество операций выделения/освобождения
 
 typedef struct AddressTracker
@@ -128,6 +128,14 @@ bool enqueueLinkedListQueue(LinkedListQueue *q, Request req, bool show_addresses
                             AddressTracker *tracker, clock_t *enqueue_time_accumulator, int *enqueue_count)
 {
     clock_t start = clock();
+
+    if (q->size >= MAX_QUEUE_LINKED_SIZE)
+    {
+        clock_t end = clock();
+        *enqueue_time_accumulator += (end - start);
+        // printf("Очередь переполнена. Заявка ID %d потеряна.\n", req.id);
+        return false;
+    }
 
     Node *new_node = (Node *)malloc(sizeof(Node));
     if (!new_node)
@@ -255,14 +263,17 @@ void analyze_addresses(AddressTracker *tracker)
     printf("===============================\n");
 }
 
-void run_simulation(QueueType qtype, bool show_addresses,
+bool run_simulation(QueueType qtype, bool show_addresses,
                    AddressTracker *tracker,
                    Statistics *stats,
                    clock_t *enqueue_time_accumulator,
                    int *enqueue_count,
                    clock_t *dequeue_time_accumulator,
-                   int *dequeue_count)
+                   int *dequeue_count, int t1_beg, int t1_end, int t2_beg, int t2_end)
 {
+    // print intervals
+    // printf("Интервалы заявок: t1 = [%d, %d], t2 = [%d, %d]\n", t1_beg, t1_end, t2_beg, t2_end);
+
     ArrayQueue arrayQueue;
     LinkedListQueue listQueue;
     if (qtype == QUEUE_ARRAY)
@@ -276,7 +287,7 @@ void run_simulation(QueueType qtype, bool show_addresses,
     Request current_request;
     bool has_current_request = false;
 
-    double next_arrival_time = getRandomDouble(0, 6);
+    double next_arrival_time = getRandomDouble(t1_beg, t1_end);
     int request_id = 1;
 
     stats->last_event_time = 0.0;
@@ -324,7 +335,8 @@ void run_simulation(QueueType qtype, bool show_addresses,
             if (!has_current_request)
             {
                 printf("Ошибка: Нет текущей обрабатываемой заявки при завершении обслуживания.\n");
-                exit(1);
+                printf("Завершение моделирования.\n");
+                return false;
             }
 
             current_request.cycles--;
@@ -337,6 +349,8 @@ void run_simulation(QueueType qtype, bool show_addresses,
                     if (!enq && show_addresses)
                     {
                         printf("Очередь на массиве переполнена при возвращении заявки ID %d.\n", current_request.id);
+                        printf("Завершение моделирования.\n");
+                        return false;
                     }
                 }
                 else
@@ -346,6 +360,8 @@ void run_simulation(QueueType qtype, bool show_addresses,
                     if (!enq && show_addresses)
                     {
                         printf("Очередь на списке переполнена при возвращении заявки ID %d.\n", current_request.id);
+                        printf("Завершение моделирования.\n");
+                        return false;
                     }
                 }
             }
@@ -365,7 +381,7 @@ void run_simulation(QueueType qtype, bool show_addresses,
             new_request.id = request_id++;
             new_request.cycles = 5;
             new_request.arrival_time = current_event_time;
-            new_request.service_time = getRandomDouble(0, 1);
+            new_request.service_time = getRandomDouble(t2_beg, t2_end);
 
             bool enqueued;
             if (qtype == QUEUE_ARRAY)
@@ -385,9 +401,11 @@ void run_simulation(QueueType qtype, bool show_addresses,
             else
             {
                 printf("Очередь переполнена. Заявка ID %d потеряна.\n", new_request.id);
+                printf("Завершение моделирования.\n");
+                return false;
             }
 
-            next_arrival_time += getRandomDouble(0, 6);
+            next_arrival_time += getRandomDouble(t1_beg, t1_end);
         }
 
         if (!is_busy)
@@ -405,7 +423,8 @@ void run_simulation(QueueType qtype, bool show_addresses,
                     if (!deq)
                     {
                         printf("Ошибка: Попытка декодирования из пустой очереди на массиве.\n");
-                        exit(1);
+                        printf("Завершение моделирования.\n");
+                        return false;
                     }
                 }
             }
@@ -419,7 +438,8 @@ void run_simulation(QueueType qtype, bool show_addresses,
                     if (!deq)
                     {
                         printf("Ошибка: Попытка декодирования из пустой очереди на списке.\n");
-                        exit(1);
+                        printf("Завершение моделирования.\n");
+                        return false;
                     }
                 }
             }
@@ -435,7 +455,24 @@ void run_simulation(QueueType qtype, bool show_addresses,
     }
 
     stats->total_simulation_time = stats->current_time;
+
+    return true;
 }
+
+// void free_linked_list(LinkedListQueue *q, AddressTracker *tracker)
+// {
+//     Node *current = q->front;
+//     while (current != NULL)
+//     {
+//         Node *temp = current;
+//         current = current->next;
+//         if (tracker->freed_count < MAX_ALLOCATIONS)
+//         {
+//             tracker->freed_addresses[tracker->freed_count++] = (void *)temp;
+//         }
+//         free(temp);
+//     }
+// }
 
 void simulate(QueueType qtype, bool show_addresses)
 {
@@ -462,9 +499,14 @@ void simulate(QueueType qtype, bool show_addresses)
     int enqueue_count = 0;
     int dequeue_count = 0;
 
-    run_simulation(qtype, show_addresses, &tracker, &stats,
+    bool res = run_simulation(qtype, show_addresses, &tracker, &stats,
                   &enqueue_time_accumulator, &enqueue_count,
-                  &dequeue_time_accumulator, &dequeue_count);
+                  &dequeue_time_accumulator, &dequeue_count, 0, 6, 0, 1);
+
+    if (!res)
+    {
+        return;
+    }
 
     stats.enqueue_time = ((double)enqueue_time_accumulator) / CLOCKS_PER_SEC;
     stats.dequeue_time = ((double)dequeue_time_accumulator) / CLOCKS_PER_SEC;
@@ -475,13 +517,14 @@ void simulate(QueueType qtype, bool show_addresses)
     double array_memory = (double)(MAX_QUEUE_SIZE * sizeof(Request)) / (1024.0 * 1024.0); // В мегабайтах
     double list_memory = (double)(tracker.allocated_count * sizeof(Node)) / (1024.0 * 1024.0); // В мегабайтах
 
-    double theoretical_time = 3000.0; // Примерное теоретическое время
+    double theoretical_time = 3000;
+
 
     double discrepancy = ((stats.total_simulation_time - theoretical_time) / theoretical_time) * 100.0;
 
     printf("\n=== Итоговый отчет ===\n");
     printf("Общее время моделирования: %.2lf е.в.\n", stats.total_simulation_time);
-    printf("Теоретическое время моделирования: %.2lf е.в.\n", theoretical_time);
+    printf("Теоретическое время моделирования (для времени t1: [0, 6], t2: [0, 1]): %.2lf е.в.\n", theoretical_time);
     printf("Отличие от теоретического времени: %.2lf%%\n", discrepancy);
     printf("Количество вошедших заявок: %d\n", stats.total_arrived);
     printf("Количество вышедших заявок: %d\n", stats.total_departed);
@@ -555,9 +598,14 @@ void comparative_analysis(bool show_addresses)
     AddressTracker tracker = {.allocated_count = 0, .freed_count = 0};
 
     printf("\n--- Симуляция для ArrayQueue ---\n");
-    run_simulation(QUEUE_ARRAY, show_addresses, &tracker, &array_stats,
+    bool res = run_simulation(QUEUE_ARRAY, show_addresses, &tracker, &array_stats,
                   &array_enqueue_time_accumulator, &array_enqueue_count,
-                  &array_dequeue_time_accumulator, &array_dequeue_count);
+                  &array_dequeue_time_accumulator, &array_dequeue_count, 0, 6, 0, 1);
+
+    if (!res)
+    {
+        return;
+    }
 
     array_stats.enqueue_time = ((double)array_enqueue_time_accumulator) / CLOCKS_PER_SEC;
     array_stats.dequeue_time = ((double)array_dequeue_time_accumulator) / CLOCKS_PER_SEC;
@@ -566,9 +614,14 @@ void comparative_analysis(bool show_addresses)
     double array_memory = (double)(MAX_QUEUE_SIZE * sizeof(Request)) / (1024.0 * 1024.0); // В мегабайтах
 
     printf("\n--- Симуляция для LinkedListQueue ---\n");
-    run_simulation(QUEUE_LINKED_LIST, show_addresses, &tracker, &list_stats,
+    res = run_simulation(QUEUE_LINKED_LIST, show_addresses, &tracker, &list_stats,
                   &list_enqueue_time_accumulator, &list_enqueue_count,
-                  &list_dequeue_time_accumulator, &list_dequeue_count);
+                  &list_dequeue_time_accumulator, &list_dequeue_count, 0, 6, 0, 1);
+
+    if (!res)
+    {
+        return;
+    }
 
     list_stats.enqueue_time = ((double)list_enqueue_time_accumulator) / CLOCKS_PER_SEC;
     list_stats.dequeue_time = ((double)list_dequeue_time_accumulator) / CLOCKS_PER_SEC;
@@ -576,14 +629,14 @@ void comparative_analysis(bool show_addresses)
     list_stats.avg_dequeue_time = (list_dequeue_count > 0) ? (list_stats.dequeue_time / list_dequeue_count) * 1e9 : 0.0;
     double list_memory = (double)(tracker.allocated_count * sizeof(Node)) / (1024.0 * 1024.0); // В мегабайтах
 
-    double theoretical_time = 3000.0; // Примерное теоретическое время
+    double theoretical_time = 3000;
 
     double array_discrepancy = ((array_stats.total_simulation_time - theoretical_time) / theoretical_time) * 100.0;
     double list_discrepancy = ((list_stats.total_simulation_time - theoretical_time) / theoretical_time) * 100.0;
 
     printf("\n=== Итоговый отчет для ArrayQueue ===\n");
     printf("Общее время моделирования: %.2lf е.в.\n", array_stats.total_simulation_time);
-    printf("Теоретическое время моделирования: %.2lf е.в.\n", theoretical_time);
+    printf("Теоретическое время моделирования (для времени t1: [0, 6], t2: [0, 1]): %.2lf е.в.\n", theoretical_time);
     printf("Отличие от теоретического времени: %.2lf%%\n", array_discrepancy);
     printf("Количество вошедших заявок: %d\n", array_stats.total_arrived);
     printf("Количество вышедших заявок: %d\n", array_stats.total_departed);
@@ -598,7 +651,7 @@ void comparative_analysis(bool show_addresses)
 
     printf("\n=== Итоговый отчет для LinkedListQueue ===\n");
     printf("Общее время моделирования: %.2lf е.в.\n", list_stats.total_simulation_time);
-    printf("Теоретическое время моделирования: %.2lf е.в.\n", theoretical_time);
+    printf("Теоретическое время моделирования (для времени t1: [0, 6], t2: [0, 1]): %.2lf е.в.\n", theoretical_time);
     printf("Отличие от теоретического времени: %.2lf%%\n", list_discrepancy);
     printf("Количество вошедших заявок: %d\n", list_stats.total_arrived);
     printf("Количество вышедших заявок: %d\n", list_stats.total_departed);
@@ -633,7 +686,7 @@ void comparative_analysis(bool show_addresses)
     printf("===============================\n");
 }
 
-void simulate_single_queue(QueueType qtype, bool show_addresses)
+void simulate_single_queue(QueueType qtype, bool show_addresses, int t1_beg, int t1_end, int t2_beg, int t2_end)
 {
     AddressTracker tracker = {.allocated_count = 0, .freed_count = 0};
 
@@ -658,9 +711,14 @@ void simulate_single_queue(QueueType qtype, bool show_addresses)
     int enqueue_count = 0;
     int dequeue_count = 0;
 
-    run_simulation(qtype, show_addresses, &tracker, &stats,
+    bool res = run_simulation(qtype, show_addresses, &tracker, &stats,
                   &enqueue_time_accumulator, &enqueue_count,
-                  &dequeue_time_accumulator, &dequeue_count);
+                  &dequeue_time_accumulator, &dequeue_count, t1_beg, t1_end, t2_beg, t2_end);
+
+    if (!res)
+    {
+        return;
+    }
 
     stats.enqueue_time = ((double)enqueue_time_accumulator) / CLOCKS_PER_SEC;
     stats.dequeue_time = ((double)dequeue_time_accumulator) / CLOCKS_PER_SEC;
@@ -671,14 +729,17 @@ void simulate_single_queue(QueueType qtype, bool show_addresses)
     double array_memory = (double)(MAX_QUEUE_SIZE * sizeof(Request)) / (1024.0 * 1024.0); // В мегабайтах
     double list_memory = (double)(tracker.allocated_count * sizeof(Node)) / (1024.0 * 1024.0); // В мегабайтах
 
-    double theoretical_time = 3000.0;
+    double theoretical_time = 3000;
 
     double discrepancy = ((stats.total_simulation_time - theoretical_time) / theoretical_time) * 100.0;
 
     printf("\n=== Итоговый отчет ===\n");
     printf("Общее время моделирования: %.2lf е.в.\n", stats.total_simulation_time);
-    printf("Теоретическое время моделирования: %.2lf е.в.\n", theoretical_time);
-    printf("Отличие от теоретического времени: %.2lf%%\n", discrepancy);
+    printf("Теоретическое время моделирования при t1: [0, 6], t2: [0, 1]: %.2lf е.в.\n", theoretical_time);
+    if (t1_beg == 0 && t1_end == 6 && t2_beg == 0 && t2_end == 1)
+    {
+        printf("Отличие от теоретического времени: %.2lf%%\n", discrepancy);
+    }
     printf("Количество вошедших заявок: %d\n", stats.total_arrived);
     printf("Количество вышедших заявок: %d\n", stats.total_departed);
     printf("Количество срабатываний ОА: %d\n", stats.service_operations);
@@ -703,22 +764,56 @@ void simulate_single_queue(QueueType qtype, bool show_addresses)
     }
 }
 
+void change_interval(int *t1_beg, int *t1_end, int *t2_beg, int *t2_end)
+{
+    char input[100];
+    printf("Введите интервалы: t1_beg t1_end t2_beg t2_end: ");
+    if (fgets(input, sizeof(input), stdin) == NULL)
+    {
+        printf("Ошибка: Не удалось прочитать ввод.\n");
+        return;
+    }
+    else if (sscanf(input, "%d %d %d %d", t1_beg, t1_end, t2_beg, t2_end) != 4)
+    {
+        printf("Ошибка ввода\n");
+        return;
+    }
+    else if (*t1_beg < 0 || *t1_end < 0 || *t2_beg < 0 || *t2_end < 0)
+    {
+        printf("Ошибка: Время не может быть отрицательным.\n");
+        return;
+    }
+    else if (*t1_beg > *t1_end || *t2_beg > *t2_end)
+    {
+        printf("Ошибка: Начальное время не может быть больше конечного времени.\n");
+        return;
+    }
+
+    printf("Интервалы изменены.\n");
+}
+
 int main(void)
 {
     int choice;
     QueueType qtype;
     bool chosen = false;
     bool show_addresses = false;
+    int t1_beg = 0;
+    int t1_end = 6;
+    int t2_beg = 0;
+    int t2_end = 1;
 
     while (1)
     {
-        printf("\n=== Система массового обслуживания ===\n");
+        printf("\nПрограмма имитации очереди, реализованной на массиве и на списке.\n");
+        printf("\nИнтервалы: t1 = [%d, %d], t2 = [%d, %d]\n\n", t1_beg, t1_end, t2_beg, t2_end);
         printf("1. Использовать очередь на массиве\n");
         printf("2. Использовать очередь на односвязном списке\n");
         printf("3. Включить/выключить отображение адресов при добавлении/удалении\n");
         printf("4. Запустить моделирование для выбранной реализации\n");
         printf("5. Запустить сравнительный анализ реализаций очередей\n");
-        printf("6. Выйти\n");
+        printf("6. Изменить интервалы заявок\n");
+        printf("0. Выйти\n");
         printf("Выберите опцию: ");
 
         char input[10];
@@ -755,17 +850,21 @@ int main(void)
                 printf("Выберите тип очереди перед запуском моделирования.\n");
                 break;
             }
-            simulate_single_queue(qtype, show_addresses);
+            simulate_single_queue(qtype, show_addresses, t1_beg, t1_end, t2_beg, t2_end);
             break;
         case 5:
             comparative_analysis(show_addresses);
             break;
-        case 6:
+        case 0:
             printf("Выход из программы.\n");
             exit(0);
+        case 6:
+            change_interval(&t1_beg, &t1_end, &t2_beg, &t2_end);
+            break;
         default:
             printf("Неверный выбор. Попробуйте снова.\n");
         }
+
     }
 
     return 0;

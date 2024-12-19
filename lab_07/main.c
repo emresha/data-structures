@@ -403,7 +403,64 @@ AVLNode *rotate_left(AVLNode *x)
 
 int get_balance(AVLNode *node)
 {
-    return (node) ? height(node->left) - height(node->right) : 0;
+    return node ? height(node->left) - height(node->right) : 0;
+}
+
+AVLNode *balance_node(AVLNode *node)
+{
+    if (!node)
+        return NULL;
+
+    // Обновляем высоту узла
+    node->height = 1 + max(height(node->left), height(node->right));
+
+    int balance = get_balance(node);
+
+    // LL Case
+    if (balance > 1 && get_balance(node->left) >= 0)
+    {
+        return rotate_right(node);
+    }
+
+    // LR Case
+    if (balance > 1 && get_balance(node->left) < 0)
+    {
+        node->left = rotate_left(node->left);
+        return rotate_right(node);
+    }
+
+    // RR Case
+    if (balance < -1 && get_balance(node->right) <= 0)
+    {
+        return rotate_left(node);
+    }
+
+    // RL Case
+    if (balance < -1 && get_balance(node->right) > 0)
+    {
+        node->right = rotate_right(node->right);
+        return rotate_left(node);
+    }
+
+    return node; // Если дисбаланса нет, узел не меняется
+}
+
+// Рекурсивно балансируем поддеревья, затем сам узел
+AVLNode *balance_avl_subtree(AVLNode *node)
+{
+    if (!node)
+        return NULL;
+
+    node->left = balance_avl_subtree(node->left);
+    node->right = balance_avl_subtree(node->right);
+
+    return balance_node(node);
+}
+
+// Балансируем всё дерево
+AVLNode *balance_avl_tree(AVLNode *root)
+{
+    return balance_avl_subtree(root);
 }
 
 AVLNode *insert_avl(AVLNode *root, int value)
@@ -570,111 +627,6 @@ AVLNode *insert_avl_unbalanced(AVLNode *root, int value)
     }
 
     return root;
-}
-
-typedef struct StackNode
-{
-    AVLNode *node;
-    struct StackNode *next;
-} StackNode;
-
-void push(StackNode **stack, AVLNode *node)
-{
-    StackNode *new_node = (StackNode *)malloc(sizeof(StackNode));
-    new_node->node = node;
-    new_node->next = *stack;
-    *stack = new_node;
-}
-
-AVLNode *pop(StackNode **stack)
-{
-    if (!*stack)
-    {
-        return NULL;
-    }
-    StackNode *top = *stack;
-    AVLNode *node = top->node;
-    *stack = top->next;
-    free(top);
-    return node;
-}
-
-AVLNode *balance_node(AVLNode *node)
-{
-    if (!node)
-        return node;
-
-    // Update height
-    node->height = 1 + max(height(node->left), height(node->right));
-
-    int balance = get_balance(node);
-
-    // LL Case
-    if (balance > 1 && get_balance(node->left) >= 0)
-    {
-        return rotate_right(node);
-    }
-
-    // LR Case
-    if (balance > 1 && get_balance(node->left) < 0)
-    {
-        node->left = rotate_left(node->left);
-        return rotate_right(node);
-    }
-
-    // RR Case
-    if (balance < -1 && get_balance(node->right) <= 0)
-    {
-        return rotate_left(node);
-    }
-
-    // RL Case
-    if (balance < -1 && get_balance(node->right) > 0)
-    {
-        node->right = rotate_right(node->right);
-        return rotate_left(node);
-    }
-
-    return node; // Already balanced
-}
-
-AVLNode *balance_avl_tree(AVLNode *root)
-{
-    if (!root)
-        return NULL;
-
-    AVLNode **stack = (AVLNode **)malloc(sizeof(AVLNode *) * 1000); // Dynamic allocation if needed
-    int top = -1;
-
-    AVLNode *current = root;
-    AVLNode *last_visited = NULL;
-
-    // Post-order traversal (iterative)
-    while (top >= 0 || current)
-    {
-        if (current)
-        {
-            stack[++top] = current;
-            current = current->left;
-        }
-        else
-        {
-            AVLNode *peek_node = stack[top];
-            if (peek_node->right && last_visited != peek_node->right)
-            {
-                current = peek_node->right;
-            }
-            else
-            {
-                // Balance the node
-                stack[top--] = balance_node(peek_node);
-                last_visited = peek_node;
-            }
-        }
-    }
-
-    free(stack);
-    return balance_node(root); // Ensure root is balanced
 }
 
 int search_avl(AVLNode *node, int value, int *comparisons)
@@ -1543,6 +1495,7 @@ int main(void)
         case 2:
         {
             char command[256];
+            avl_root = balance_avl_tree(avl_root);
             export_to_dot_avl(avl_root, "avl_tree.dot");
             printf("AVL дерево экспортировано в avl_tree.dot.\n");
 
