@@ -461,7 +461,6 @@ void add_book(Book books[], int *book_count)
     printf("Книга добавлена успешно!\n");
 }
 
-// Функция удаления книги по названию
 void delete_book_by_title(Book books[], int *book_count, const char *title)
 {
     int found = 0;
@@ -485,7 +484,6 @@ void delete_book_by_title(Book books[], int *book_count, const char *title)
     }
 }
 
-// Функция вывода книг
 void display_books(Book books[], int book_count)
 {
     print_table_header();
@@ -495,7 +493,6 @@ void display_books(Book books[], int book_count)
     }
 }
 
-// Функция сортировки пузырьком по автору
 void bubble_sort_books_by_author(Book books[], int book_count)
 {
     for (int i = 0; i < book_count - 1; i++)
@@ -512,7 +509,6 @@ void bubble_sort_books_by_author(Book books[], int book_count)
     }
 }
 
-// Функция сортировки изначальной таблицы по автору
 void display_sorted_books_by_author(Book books[], int book_count)
 {
     Book temp_books[MAX_BOOKS];
@@ -544,7 +540,6 @@ void bubble_sort_books_by_author_table(AuthorIndex author_table[], int book_coun
     }
 }
 
-// Функция сортировки используя дополнительную таблицу "по ключам"
 void display_sorted_books_using_author_table(Book books[], int book_count, AuthorIndex author_table[])
 {
     AuthorIndex temp_author_table[MAX_BOOKS];

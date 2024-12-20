@@ -165,7 +165,6 @@ void clearEdges(Graph *graph)
     }
 }
 
-// Алгоритм Хиерголзера для поиска Эйлова пути
 int *findEulerPath(Graph *graph, int *pathSize)
 {
     // Сначала подсчитаем общее количество ребер
