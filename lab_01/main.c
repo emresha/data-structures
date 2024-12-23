@@ -151,14 +151,15 @@ int multiply(big_float_t *number, char *big_int, big_float_t *result)
             if (carry)
             {
                 // printf("HREE\n");
-                memmove(&mult_result[1], mult_result, MAX_RES_DIGITS);
+                memmove(&mult_result[1], mult_result, MAX_RES_DIGITS - 1);
                 mult_result[0] = '1';
                 result->exponent++;
             }
         }
 
-        mult_result[MAX_RES_DIGITS] = '\0';
+        mult_result[MAX_RES_DIGITS - 4] = '\0';
         result->exponent += (result_len - MAX_RES_DIGITS);
+
     }
     else
     {
@@ -275,6 +276,21 @@ void delete_zeros(big_float_t *result)
     result->exponent += zeros;
 }
 
+void delete_zeros_char(char *str)
+{
+    int len = strlen(str);
+    int zeros = 0;
+    for (int i = len - 1; i >= 0; i--)
+    {
+        if (str[i] == '0')
+            zeros++;
+        else
+            break;
+    }
+
+    str[len - zeros] = 0;
+}
+
 int main(void)
 {
     big_float_t number, result;
@@ -341,7 +357,11 @@ int main(void)
 
     char exp_sign = (result.exponent < 0) ? '\0' : '+';
 
-    printf("Результат: %c0.%s E %c%d\n", result.sign, result.mantissa, exp_sign, result.exponent + (int)strlen(result.mantissa) + add_exp);
+    char new_mantissa[MAX_RES_DIGITS - 1];
+    strncpy(new_mantissa, result.mantissa, MAX_RES_DIGITS - 1);
+    delete_zeros_char(new_mantissa);
+
+    printf("Результат: %c0.%s E %c%d\n", result.sign, new_mantissa, exp_sign, result.exponent + (int)strlen(result.mantissa) + add_exp);
 
     return ERR_OK;
 }

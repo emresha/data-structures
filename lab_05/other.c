@@ -3,9 +3,9 @@
 #include <time.h>
 #include <stdbool.h>
 
-#define MAX_QUEUE_SIZE 50000 // Максимальный размер очереди для реализации на массиве
+#define MAX_QUEUE_SIZE 10000 // Максимальный размер очереди для реализации на массиве
 #define MAX_CYCLES 1000     // Количество заявок для обработки
-#define MAX_QUEUE_LINKED_SIZE 50000 // Максимальный размер очереди для реализации на списке
+#define MAX_QUEUE_LINKED_SIZE 100000 // Максимальный размер очереди для реализации на списке
 #define MAX_ALLOCATIONS 50000 // Максимальное количество операций выделения/освобождения
 
 typedef struct AddressTracker
@@ -554,114 +554,136 @@ void comparative_analysis(bool show_addresses)
 {
     printf("\n=== Сравнительный анализ реализаций очередей ===\n");
 
-    int test_cycles[] = {100, 500, 1000, 5000};
-    size_t num_tests = sizeof(test_cycles) / sizeof(test_cycles[0]);
+    Statistics array_stats = {
+        .current_time = 0.0,
+        .total_simulation_time = 0.0,
+        .total_arrived = 0,
+        .total_departed = 0,
+        .service_operations = 0,
+        .last_event_time = 0.0,
+        .total_idle_time = 0.0,
+        .last_service_end_time = 0.0,
+        .cumulative_queue_length = 0.0,
+        .enqueue_time = 0.0,
+        .dequeue_time = 0.0,
+        .avg_enqueue_time = 0.0,
+        .avg_dequeue_time = 0.0,
+        .memory_usage = 0.0
+    };
+    clock_t array_enqueue_time_accumulator = 0;
+    int array_enqueue_count = 0;
+    clock_t array_dequeue_time_accumulator = 0;
+    int array_dequeue_count = 0;
 
-    printf("\n| Заявки | ArrayQueue (время, тики) | LinkedListQueue (время, тики) | ArrayQueue (память, байты) | LinkedListQueue (память, байты) |\n");
-    printf("---------------------------------------------------------------------------------------------------------------\n");
+    Statistics list_stats = {
+        .current_time = 0.0,
+        .total_simulation_time = 0.0,
+        .total_arrived = 0,
+        .total_departed = 0,
+        .service_operations = 0,
+        .last_event_time = 0.0,
+        .total_idle_time = 0.0,
+        .last_service_end_time = 0.0,
+        .cumulative_queue_length = 0.0,
+        .enqueue_time = 0.0,
+        .dequeue_time = 0.0,
+        .avg_enqueue_time = 0.0,
+        .avg_dequeue_time = 0.0,
+        .memory_usage = 0.0
+    };
+    clock_t list_enqueue_time_accumulator = 0;
+    int list_enqueue_count = 0;
+    clock_t list_dequeue_time_accumulator = 0;
+    int list_dequeue_count = 0;
+    AddressTracker tracker = {.allocated_count = 0, .freed_count = 0};
 
-    for (size_t i = 0; i < num_tests; i++)
+    printf("\n--- Симуляция для ArrayQueue ---\n");
+    bool res = run_simulation(QUEUE_ARRAY, show_addresses, &tracker, &array_stats,
+                  &array_enqueue_time_accumulator, &array_enqueue_count,
+                  &array_dequeue_time_accumulator, &array_dequeue_count, 0, 6, 0, 1);
+
+    if (!res)
     {
-        int max_cycles = test_cycles[i];
-
-        unsigned long array_total_time = 0;
-        unsigned long list_total_time = 0;
-        double array_memory = 0;
-        double list_memory = 0;
-
-        for (int run = 0; run < 5; run++)
-        {
-            Statistics array_stats = {
-                .current_time = 0.0,
-                .total_simulation_time = 0.0,
-                .total_arrived = 0,
-                .total_departed = 0,
-                .service_operations = 0,
-                .last_event_time = 0.0,
-                .total_idle_time = 0.0,
-                .last_service_end_time = 0.0,
-                .cumulative_queue_length = 0.0,
-                .enqueue_time = 0.0,
-                .dequeue_time = 0.0,
-                .avg_enqueue_time = 0.0,
-                .avg_dequeue_time = 0.0,
-                .memory_usage = 0.0};
-
-            clock_t array_enqueue_time_accumulator = 0;
-            int array_enqueue_count = 0;
-            clock_t array_dequeue_time_accumulator = 0;
-            int array_dequeue_count = 0;
-
-            Statistics list_stats = {
-                .current_time = 0.0,
-                .total_simulation_time = 0.0,
-                .total_arrived = 0,
-                .total_departed = 0,
-                .service_operations = 0,
-                .last_event_time = 0.0,
-                .total_idle_time = 0.0,
-                .last_service_end_time = 0.0,
-                .cumulative_queue_length = 0.0,
-                .enqueue_time = 0.0,
-                .dequeue_time = 0.0,
-                .avg_enqueue_time = 0.0,
-                .avg_dequeue_time = 0.0,
-                .memory_usage = 0.0};
-
-            clock_t list_enqueue_time_accumulator = 0;
-            int list_enqueue_count = 0;
-            clock_t list_dequeue_time_accumulator = 0;
-            int list_dequeue_count = 0;
-
-            AddressTracker tracker = {.allocated_count = 0, .freed_count = 0};
-
-            clock_t start_time = clock();
-            bool res = run_simulation(QUEUE_ARRAY, show_addresses, &tracker, &array_stats,
-                                      &array_enqueue_time_accumulator, &array_enqueue_count,
-                                      &array_dequeue_time_accumulator, &array_dequeue_count, 1000, 1000, 900, 900);
-            clock_t end_time = clock();
-
-            if (!res)
-            {
-                printf("Ошибка при моделировании для ArrayQueue.\n");
-                return;
-            }
-
-            array_total_time += (unsigned long)(end_time - start_time);
-
-            array_memory = (double)(MAX_QUEUE_SIZE * sizeof(Request));
-
-            start_time = clock();
-            for (int i = 0; i < max_cycles * 20000; i++)
-                ;
-            
-            res = run_simulation(QUEUE_LINKED_LIST, show_addresses, &tracker, &list_stats,
-                                 &list_enqueue_time_accumulator, &list_enqueue_count,
-                                 &list_dequeue_time_accumulator, &list_dequeue_count, 1000, 1000, 900, 900);
-            end_time = clock();
-
-            if (!res)
-            {
-                printf("Ошибка при моделировании для LinkedListQueue.\n");
-                return;
-            }
-
-            list_total_time += (unsigned long)(end_time - start_time);
-
-            list_memory = (double)(max_cycles * sizeof(Node));
-        }
-
-        array_total_time /= 5;
-        list_total_time /= 5;
-
-        printf("| %6d | %20lu | %24lu | %22.0lf | %25.0lf |\n",
-               max_cycles,
-               array_total_time,
-               list_total_time,
-               array_memory, list_memory);
+        return;
     }
 
-    printf("---------------------------------------------------------------------------------------------------------------\n");
+    array_stats.enqueue_time = ((double)array_enqueue_time_accumulator) / CLOCKS_PER_SEC;
+    array_stats.dequeue_time = ((double)array_dequeue_time_accumulator) / CLOCKS_PER_SEC;
+    array_stats.avg_enqueue_time = (array_enqueue_count > 0) ? (array_stats.enqueue_time / array_enqueue_count) * 1e9 : 0.0;
+    array_stats.avg_dequeue_time = (array_dequeue_count > 0) ? (array_stats.dequeue_time / array_dequeue_count) * 1e9 : 0.0;
+    double array_memory = (double)(MAX_QUEUE_SIZE * sizeof(Request)) / (1024.0 * 1024.0); // В мегабайтах
+
+    printf("\n--- Симуляция для LinkedListQueue ---\n");
+    res = run_simulation(QUEUE_LINKED_LIST, show_addresses, &tracker, &list_stats,
+                  &list_enqueue_time_accumulator, &list_enqueue_count,
+                  &list_dequeue_time_accumulator, &list_dequeue_count, 0, 6, 0, 1);
+
+    if (!res)
+    {
+        return;
+    }
+
+    list_stats.enqueue_time = ((double)list_enqueue_time_accumulator) / CLOCKS_PER_SEC;
+    list_stats.dequeue_time = ((double)list_dequeue_time_accumulator) / CLOCKS_PER_SEC;
+    list_stats.avg_enqueue_time = (list_enqueue_count > 0) ? (list_stats.enqueue_time / list_enqueue_count) * 1e9 : 0.0;
+    list_stats.avg_dequeue_time = (list_dequeue_count > 0) ? (list_stats.dequeue_time / list_dequeue_count) * 1e9 : 0.0;
+    double list_memory = (double)(tracker.allocated_count * sizeof(Node)) / (1024.0 * 1024.0); // В мегабайтах
+
+    double theoretical_time = 3000;
+
+    double array_discrepancy = ((array_stats.total_simulation_time - theoretical_time) / theoretical_time) * 100.0;
+    double list_discrepancy = ((list_stats.total_simulation_time - theoretical_time) / theoretical_time) * 100.0;
+
+    printf("\n=== Итоговый отчет для ArrayQueue ===\n");
+    printf("Общее время моделирования: %.2lf е.в.\n", array_stats.total_simulation_time);
+    printf("Теоретическое время моделирования (для времени t1: [0, 6], t2: [0, 1]): %.2lf е.в.\n", theoretical_time);
+    printf("Отличие от теоретического времени: %.2lf%%\n", array_discrepancy);
+    printf("Количество вошедших заявок: %d\n", array_stats.total_arrived);
+    printf("Количество вышедших заявок: %d\n", array_stats.total_departed);
+    printf("Количество срабатываний ОА: %d\n", array_stats.service_operations);
+    printf("Время простоя аппарата: %.2lf е.в.\n", array_stats.total_idle_time);
+    printf("Общее время выполнения enqueue: %.6lf секунд\n", array_stats.enqueue_time);
+    printf("Общее время выполнения dequeue: %.6lf секунд\n", array_stats.dequeue_time);
+    printf("Среднее время одной операции enqueue: %.2lf наносекунд\n", array_stats.avg_enqueue_time);
+    printf("Среднее время одной операции dequeue: %.2lf наносекунд\n", array_stats.avg_dequeue_time);
+    printf("Использование памяти для ArrayQueue: %.2lf МБ\n", array_memory);
+    printf("======================\n");
+
+    printf("\n=== Итоговый отчет для LinkedListQueue ===\n");
+    printf("Общее время моделирования: %.2lf е.в.\n", list_stats.total_simulation_time);
+    printf("Теоретическое время моделирования (для времени t1: [0, 6], t2: [0, 1]): %.2lf е.в.\n", theoretical_time);
+    printf("Отличие от теоретического времени: %.2lf%%\n", list_discrepancy);
+    printf("Количество вошедших заявок: %d\n", list_stats.total_arrived);
+    printf("Количество вышедших заявок: %d\n", list_stats.total_departed);
+    printf("Количество срабатываний ОА: %d\n", list_stats.service_operations);
+    printf("Время простоя аппарата: %.2lf е.в.\n", list_stats.total_idle_time);
+    printf("Общее время выполнения enqueue: %.6lf секунд\n", list_stats.enqueue_time);
+    printf("Общее время выполнения dequeue: %.6lf секунд\n", list_stats.dequeue_time);
+    printf("Среднее время одной операции enqueue: %.2lf наносекунд\n", list_stats.avg_enqueue_time);
+    printf("Среднее время одной операции dequeue: %.2lf наносекунд\n", list_stats.avg_dequeue_time);
+    printf("Использование памяти для LinkedListQueue: %.2lf МБ\n", list_memory);
+    printf("======================\n");
+
+    if (show_addresses)
+    {
+        printf("\n=== Анализ адресов памяти для LinkedListQueue ===\n");
+        analyze_addresses(&tracker);
+    }
+
+    printf("\n=== Сравнительный отчет ===\n");
+    printf("Метрики для ArrayQueue и LinkedListQueue:\n");
+    printf("------------------------------------------------------------\n");
+    printf("| Метрика                   | ArrayQueue      | LinkedListQueue |\n");
+    printf("------------------------------------------------------------\n");
+    printf("| Общее время моделирования | %.2lf е.в.       | %.2lf е.в.        |\n", array_stats.total_simulation_time, list_stats.total_simulation_time);
+    printf("| Отклонения                | %.2lf%%          | %.2lf%%           |\n", array_discrepancy, list_discrepancy);
+    printf("| Время выполнения enqueue  | %.6lf сек       | %.6lf сек        |\n", array_stats.enqueue_time, list_stats.enqueue_time);
+    printf("| Время выполнения dequeue  | %.6lf сек       | %.6lf сек        |\n", array_stats.dequeue_time, list_stats.dequeue_time);
+    printf("| Среднее время enqueue     | %.2lf нс         | %.2lf нс          |\n", array_stats.avg_enqueue_time, list_stats.avg_enqueue_time);
+    printf("| Среднее время dequeue     | %.2lf нс         | %.2lf нс          |\n", array_stats.avg_dequeue_time, list_stats.avg_dequeue_time);
+    printf("| Использование памяти      | %.2lf МБ        | %.2lf МБ         |\n", array_memory, list_memory);
+    printf("------------------------------------------------------------\n");
+    printf("===============================\n");
 }
 
 void simulate_single_queue(QueueType qtype, bool show_addresses, int t1_beg, int t1_end, int t2_beg, int t2_end)
