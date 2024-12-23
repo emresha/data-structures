@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <ctype.h>
 
@@ -91,8 +92,7 @@ int multiply_big_numbers(const char *mantissa, char *big_int, char *result, int 
     return ERR_OK;
 }
 
-// Функция для умножения большого числа с плавающей запятой на целое число
-int multiply(big_float_t *number, char *big_int, big_float_t *result)
+int multiply(big_float_t *number, char *big_int, big_float_t *result, bool debug)
 {
     if (strlen(big_int) > MAX_INT_DIGITS)
     {
@@ -105,7 +105,7 @@ int multiply(big_float_t *number, char *big_int, big_float_t *result)
     {
         if (big_int[0] == '-')
             result->sign = (result->sign == '-') ? '+' : '-';
-        
+
         for (int i = 0; big_int[i] != '\0'; i++)
         {
             big_int[i] = big_int[i + 1];
@@ -121,26 +121,25 @@ int multiply(big_float_t *number, char *big_int, big_float_t *result)
 
     result->exponent = number->exponent - decimal_shift;
 
-    // округление
-    int result_len = strlen(mult_result);
+    int result_len = (int)strlen(mult_result);
+
+    if (debug)
+        printf("mult_result: %s\n", mult_result);
+
     if (result_len > MAX_RES_DIGITS)
     {
-        char rounding_digit = mult_result[MAX_RES_DIGITS - 2];
-        // printf("ROUNDING DIGIT IS %c\n", rounding_digit);
-        mult_result[MAX_RES_DIGITS] = '\0';
+        char rounding_digit = mult_result[MAX_RES_DIGITS];
 
-        // printf("MULT RESULT IS: \'%s\'\n", mult_result);
+        mult_result[MAX_RES_DIGITS] = '\0';
 
         if (rounding_digit >= '5')
         {
             int carry = 1;
-            for (int i = MAX_RES_DIGITS - 2; i >= 0 && carry; i--)
+            for (int i = MAX_RES_DIGITS - 1; i >= 0 && carry; i--)
             {
                 if (mult_result[i] < '9')
                 {
-                    // printf("ABOUT TO LOSE CARRY AT %d WITH VALUE %c\n", i, mult_result[i]);
                     mult_result[i]++;
-                    // printf("LOST CARRY AT %d\n", i);
                     carry = 0;
                 }
                 else
@@ -150,16 +149,13 @@ int multiply(big_float_t *number, char *big_int, big_float_t *result)
             }
             if (carry)
             {
-                // printf("HREE\n");
-                memmove(&mult_result[1], mult_result, MAX_RES_DIGITS - 1);
+                memmove(&mult_result[1], mult_result, MAX_RES_DIGITS);
                 mult_result[0] = '1';
                 result->exponent++;
             }
         }
 
-        mult_result[MAX_RES_DIGITS - 4] = '\0';
         result->exponent += (result_len - MAX_RES_DIGITS);
-
     }
     else
     {
@@ -167,10 +163,11 @@ int multiply(big_float_t *number, char *big_int, big_float_t *result)
     }
 
     strcpy(result->mantissa, mult_result);
+
     return ERR_OK;
 }
 
-// Функция для проверки строки на наличие только цифр
+
 int check_str(char *str)
 {
     int rc = ERR_OK;
@@ -291,7 +288,7 @@ void delete_zeros_char(char *str)
     str[len - zeros] = 0;
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
     big_float_t number, result;
     char big_int[MAX_INT_DIGITS + 1];
@@ -318,7 +315,11 @@ int main(void)
         return ret;
     }
 
-    ret = multiply(&number, big_int, &result);
+
+    if (argc == 2 && strcmp(argv[1], "d") == 0)
+        ret = multiply(&number, big_int, &result, true);
+    else
+        ret = multiply(&number, big_int, &result, false);
     if (ret != ERR_OK)
     {
         if (ret == ERR_IO)
@@ -357,11 +358,7 @@ int main(void)
 
     char exp_sign = (result.exponent < 0) ? '\0' : '+';
 
-    char new_mantissa[MAX_RES_DIGITS - 1];
-    strncpy(new_mantissa, result.mantissa, MAX_RES_DIGITS - 1);
-    delete_zeros_char(new_mantissa);
-
-    printf("Результат: %c0.%s E %c%d\n", result.sign, new_mantissa, exp_sign, result.exponent + (int)strlen(result.mantissa) + add_exp);
+    printf("Результат: %c0.%s E %c%d\n", result.sign, result.mantissa, exp_sign, result.exponent + (int)strlen(result.mantissa) + add_exp);
 
     return ERR_OK;
 }
