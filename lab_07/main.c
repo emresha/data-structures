@@ -3,7 +3,7 @@
 #include <string.h>
 #include <time.h>
 
-#define TABLE_SIZE 101
+#define TABLE_SIZE 13
 
 typedef struct HashNode
 {
@@ -729,17 +729,15 @@ AVLNode *delete_node_avl(AVLNode *root, int value)
             AVLNode *temp = root->right;
             while (temp->left)
             {
-                temp = temp->left; // Ищем минимальный узел в правом поддереве
+                temp = temp->left;
             }
-            root->value = temp->value;                               // Копируем значение
-            root->right = delete_node_avl(root->right, temp->value); // Удаляем дубликат
+            root->value = temp->value;
+            root->right = delete_node_avl(root->right, temp->value);
         }
     }
 
-    // Обновляем высоту
     root->height = 1 + max(height(root->left), height(root->right));
 
-    // Проверяем баланс
     int balance = get_balance(root);
 
     // LL случай
@@ -767,7 +765,6 @@ AVLNode *delete_node_avl(AVLNode *root, int value)
     return root; // Возвращаем корень
 }
 
-// Экспорт AVL-дерева в файл формата .dot
 void export_to_dot_avl(AVLNode *root, const char *filename)
 {
     FILE *f = fopen(filename, "w");
@@ -929,14 +926,14 @@ void rehash(HashTable **hash_table_ptr, int *current_size)
 typedef struct HashNodeLinear
 {
     int key;
-    int is_occupied; // Флаг занятости (1 - занято, 0 - свободно)
+    int is_occupied;
 } HashNodeLinear;
 
 typedef struct HashTableLinear
 {
-    HashNodeLinear *table; // Массив узлов
-    size_t size;           // Размер таблицы
-    size_t occupied;       // Количество занятых ячеек
+    HashNodeLinear *table;
+    size_t size;
+    size_t occupied;
 } HashTableLinear;
 
 // Хеш-функция
@@ -951,7 +948,7 @@ HashTableLinear *create_hash_table_linear(size_t size)
     HashTableLinear *hash_table = (HashTableLinear *)malloc(sizeof(HashTableLinear));
     hash_table->size = size;
     hash_table->occupied = 0;
-    hash_table->table = (HashNodeLinear *)calloc(size, sizeof(HashNodeLinear)); // Все ячейки свободны
+    hash_table->table = (HashNodeLinear *)calloc(size, sizeof(HashNodeLinear));
     return hash_table;
 }
 
@@ -960,105 +957,89 @@ HashTableLinear *create_hash_table_linear(size_t size)
 void rehash_linear(HashTableLinear **hash_table_ptr)
 {
     HashTableLinear *old_table = *hash_table_ptr;
-    size_t new_size = old_table->size * 2; // Увеличиваем размер таблицы
+    size_t new_size = old_table->size * 2; 
     HashTableLinear *new_table = create_hash_table_linear(new_size);
 
-    // Переносим данные из старой таблицы в новую
     for (size_t i = 0; i < old_table->size; i++)
     {
         if (old_table->table[i].is_occupied)
         {
             size_t index = old_table->table[i].key % new_table->size;
 
-            // Пробируем линейно, пока не найдем свободный слот
             while (new_table->table[index].is_occupied)
-            {
                 index = (index + 1) % new_table->size;
-            }
 
-            // Копируем данные
             new_table->table[index].key = old_table->table[i].key;
             new_table->table[index].is_occupied = 1;
         }
     }
 
-    // Освобождаем память старой таблицы
     free(old_table->table);
     free(old_table);
 
     *hash_table_ptr = new_table;
 }
 
-// Вставка элемента с линейной адресацией
 void insert_hash_linear(HashTableLinear *hash_table, int key)
 {
     if ((double)hash_table->occupied / hash_table->size > LOAD_FACTOR)
     {
         printf("Рехеширование...\n");
-        rehash_linear(&hash_table); // Выполняем рехеширование при переполнении
+        rehash_linear(&hash_table);
     }
 
     int index = hash_function_linear(key, hash_table->size);
 
-    // Линейное пробирование
     while (hash_table->table[index].is_occupied)
     {
         if (hash_table->table[index].key == key)
         {
-            // Ключ уже существует, выходим
             return;
         }
         index = (index + 1) % hash_table->size;
     }
 
-    // Вставляем новый ключ
     hash_table->table[index].key = key;
     hash_table->table[index].is_occupied = 1;
     hash_table->occupied++;
 }
 
-// Поиск элемента с линейной адресацией
 int search_hash_linear(HashTableLinear *hash_table, int key, int *comparisons)
 {
     int index = hash_function_linear(key, hash_table->size);
     *comparisons = 0;
 
-    // Линейное пробирование
     while (hash_table->table[index].is_occupied)
     {
         (*comparisons)++;
         if (hash_table->table[index].key == key)
         {
-            return 1; // Найден
+            return 1;
         }
         index = (index + 1) % hash_table->size;
     }
 
-    return 0; // Не найден
+    return 0;
 }
 
-// Удаление элемента с линейной адресацией
 int delete_hash_linear(HashTableLinear *hash_table, int key)
 {
     int index = hash_function_linear(key, hash_table->size);
 
-    // Линейное пробирование
     while (hash_table->table[index].is_occupied)
     {
         if (hash_table->table[index].key == key)
         {
-            // Ключ найден, "удаляем" его
             hash_table->table[index].is_occupied = 0;
             hash_table->occupied--;
-            return 1; // Успешно удалено
+            return 1;
         }
         index = (index + 1) % hash_table->size;
     }
 
-    return 0; // Не найден
+    return 0;
 }
 
-// Освобождение памяти хэш-таблицы
 void free_hash_table_linear(HashTableLinear *hash_table)
 {
     free(hash_table->table);
@@ -1069,7 +1050,6 @@ void compare_structures(void)
 {
     printf("Сравнение поиска в BST, AVL-дереве и хеш-таблице с различными размерами данных\n");
 
-    // Таблица для BST
     printf("\nТаблица результатов для BST\n");
     printf("Размер | Время поиска (тики) | Количество сравнений | Используемая память (байты)\n");
     printf("-------------------------------------------------------------------------------\n");
@@ -1083,23 +1063,19 @@ void compare_structures(void)
             return;
         }
 
-        // Генерация случайных данных
         for (int i = 0; i < size; i++)
         {
-            data[i] = rand() % 100000; // Случайные числа от 0 до 99999
+            data[i] = rand() % 100000;
         }
 
-        // Выбираем случайный ключ для поиска
         int search_key = data[rand() % size];
 
-        // Создаем BST
         TreeNode *bst_root = NULL;
         for (int i = 0; i < size; i++)
         {
             bst_root = insert(bst_root, data[i]);
         }
 
-        // Измеряем время поиска в BST
         clock_t start, end;
         int bst_comparisons = 0;
 
@@ -1119,20 +1095,16 @@ void compare_structures(void)
         end = clock();
         double bst_search_time = (double)(end - start);
 
-        // Подсчет памяти
         size_t bst_memory = size * sizeof(TreeNode);
 
-        // Вывод результатов для BST
         printf("%6d | %18.0f | %20d | %24zu\n", size, bst_search_time, bst_comparisons, bst_memory);
 
-        // Очистка памяти для BST
         free_tree(bst_root);
         free(data);
     }
 
     printf("-------------------------------------------------------------------------------\n");
 
-    // Таблица для хеш-таблицы с цепочками
     printf("\nТаблица результатов для Хеш-таблицы с цепочками\n");
     printf("Размер | Время поиска (тики) | Количество сравнений | Используемая память (байты)\n");
     printf("-------------------------------------------------------------------------------\n");
@@ -1146,16 +1118,13 @@ void compare_structures(void)
             return;
         }
 
-        // Генерация случайных данных
         for (int i = 0; i < size; i++)
         {
-            data[i] = rand() % 100000; // Случайные числа от 0 до 99999
+            data[i] = rand() % 100000;
         }
 
-        // Выбираем случайный ключ для поиска
         int search_key = data[rand() % size];
 
-        // Создаем хеш-таблицу с цепочками
         HashTable *hash_table = (HashTable *)malloc(sizeof(HashTable));
         hash_table->table = (HashNode **)calloc(size * 2, sizeof(HashNode *));
         hash_table->size = size * 2;
@@ -1166,7 +1135,6 @@ void compare_structures(void)
             insert_hash(hash_table, data[i]);
         }
 
-        // Измеряем время поиска в хеш-таблице
         clock_t start, end;
         int hash_comparisons = 0;
 
@@ -1175,7 +1143,6 @@ void compare_structures(void)
         end = clock();
         double hash_search_time = (double)(end - start);
 
-        // Подсчет памяти
         size_t hash_memory = sizeof(HashTable) + hash_table->size * sizeof(HashNode *);
         for (int i = 0; i < hash_table->size; i++)
         {
@@ -1187,17 +1154,14 @@ void compare_structures(void)
             }
         }
 
-        // Вывод результатов для хеш-таблицы
         printf("%6d | %18.0f | %20d | %24zu\n", size, hash_search_time, hash_comparisons, hash_memory);
 
-        // Очистка памяти для хеш-таблицы
         free_hash_table(hash_table);
         free(data);
     }
 
     printf("-------------------------------------------------------------------------------\n");
 
-    // Таблица для AVL
     printf("\nТаблица результатов для AVL\n");
     printf("Размер | Время поиска (тики) | Количество сравнений | Используемая память (байты)\n");
     printf("-------------------------------------------------------------------------------\n");
@@ -1211,16 +1175,13 @@ void compare_structures(void)
             return;
         }
 
-        // Генерация случайных данных
         for (int i = 0; i < size; i++)
         {
-            data[i] = rand() % 100000; // Случайные числа от 0 до 99999
+            data[i] = rand() % 100000;
         }
 
-        // Выбираем случайный ключ для поиска
         int search_key = data[rand() % size];
 
-        // Создаем AVL-дерево
         AVLNode *avl_root = NULL;
         for (int i = 0; i < size; i++)
         {
@@ -1229,7 +1190,6 @@ void compare_structures(void)
 
         balance_avl_tree(avl_root);
 
-        // Измеряем время поиска в AVL
         clock_t start, end;
         int avl_comparisons = 0;
 
@@ -1248,20 +1208,16 @@ void compare_structures(void)
         end = clock();
         double avl_search_time = end - start;
 
-        // Подсчет памяти
         size_t avl_memory = size * sizeof(AVLNode);
 
-        // Вывод результатов для AVL
         printf("%6d | %18.0f | %20d | %24zu\n", size, avl_search_time, avl_comparisons, avl_memory);
 
-        // Очистка памяти для AVL
         free_avl(avl_root);
         free(data);
     }
 
     printf("-------------------------------------------------------------------------------\n");
 
-    // Таблица для Хеш-таблицы с линейной адресацией
     printf("\nТаблица результатов для Хеш-таблицы с линейной адресацией\n");
     printf("Размер | Время поиска (тики) | Количество сравнений | Используемая память (байты)\n");
     printf("-------------------------------------------------------------------------------\n");
@@ -1275,16 +1231,13 @@ void compare_structures(void)
             return;
         }
 
-        // Генерация случайных данных
         for (int i = 0; i < size; i++)
         {
-            data[i] = rand() % 100000; // Случайные числа от 0 до 99999
+            data[i] = rand() % 100000;
         }
 
-        // Выбираем случайный ключ для поиска
         int search_key = data[rand() % size];
 
-        // Создаем хеш-таблицу с линейной адресацией
         HashTableLinear *hash_table_linear = create_hash_table_linear(size * 2);
 
         for (int i = 0; i < size; i++)
@@ -1292,7 +1245,6 @@ void compare_structures(void)
             insert_hash_linear(hash_table_linear, data[i]);
         }
 
-        // Измеряем время поиска в хеш-таблице
         clock_t start, end;
         int hash_comparisons = 0;
 
@@ -1301,13 +1253,10 @@ void compare_structures(void)
         end = clock();
         double hash_search_time = (double)(end - start);
 
-        // Подсчет памяти
         size_t hash_memory_linear = sizeof(HashTableLinear) + hash_table_linear->size * sizeof(HashNode);
 
-        // Вывод результатов для хеш-таблицы с линейной адресацией
         printf("%6d | %18.0f | %20d | %24zu\n", size, hash_search_time, hash_comparisons, hash_memory_linear);
 
-        // Очистка памяти для хеш-таблицы
         free_hash_table_linear(hash_table_linear);
         free(data);
     }
@@ -1411,15 +1360,14 @@ int main(void)
 {
     printf("Программа для работы с бинарным деревом, AVL-деревом и хеш-таблицей.\n");
 
-    TreeNode *bst_root = NULL; // Корень бинарного дерева поиска
-    AVLNode *avl_root = NULL;  // Корень AVL-дерева
-    int hash_table_size = 101; // Начальный размер хеш-таблицы
+    TreeNode *bst_root = NULL;
+    AVLNode *avl_root = NULL;
+    int hash_table_size = TABLE_SIZE;
     HashTable *hash_table = create_hash_table(hash_table_size);
 
     srand(time(NULL));
     char filename[256];
 
-    // Ввод имени файла
     while (1)
     {
         printf("Введите имя файла для чтения: ");
@@ -1442,8 +1390,8 @@ int main(void)
         }
     }
 
-    read_from_file(filename, &bst_root);     // Создаем бинарное дерево поиска
-    read_from_file_avl(filename, &avl_root); // Создаем AVL-дерево
+    read_from_file(filename, &bst_root);
+    read_from_file_avl(filename, &avl_root);
     printf("Деревья успешно построены.\n");
 
     int choice;

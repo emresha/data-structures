@@ -124,7 +124,7 @@ int multiply(big_float_t *number, char *big_int, big_float_t *result, bool debug
     int result_len = (int)strlen(mult_result);
 
     if (debug)
-        printf("mult_result: %s\n", mult_result);
+        printf("mult_result:  %s\n", mult_result);
 
     if (result_len > MAX_RES_DIGITS)
     {
